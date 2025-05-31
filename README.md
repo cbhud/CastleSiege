@@ -1,96 +1,82 @@
-# Castle Siege 2 — The Improved Version of Castle Siege!
 
-![Castle Siege 2](https://i.imgur.com/d3KxRQF.png)
+# 🏰 Castle Siege 2 — The Improved Version of Castle Siege!
 
-Castle Siege 2 is the enhanced and community-driven successor to the original Castle Siege! Built with the needs of players and server owners in mind, it introduces a **simple multi-arena system**, **arena regeneration**, and **full customization** of features.
+![Castle Siege 2](https://i.imgur.com/Zyt5Cpz.jpeg)
 
-> **Note:** This is a beta release. Some features may be missing or incomplete but will be added in the future.
+Castle Siege 2 is a complete overhaul and upgrade of the original Castle Siege minigame. Built from the ground up for modern servers, it offers full customization, multi-arena support, and exciting, balanced team-based gameplay.
+
+> ⚠️ **Note:** This is a beta release (Beta-3). Some features such as Hardcore Mode, BossBar support, and Player Stats are not yet implemented.
+
+#  Your goal? Assassinate the King or protect the throne. It's all about thrilling battles and fun for everyone on server!
 
 ---
 
-## 🔥 Key Features
+## 🔥 Features
 
-- ✅ Multi-arena support
-- ♻️ Arena regeneration
-- 🎮 Customizable kits, messages, and scoreboards (now with gradient and PlaceholderAPI support!)
-- 🧩 Full YAML configuration: `arenas.yml`, `config.yml`, `messages.yml`, `scoreboards.yml`
+- ⚔️ **Two Teams**: Attackers try to assassinate the King; Defenders protect the throne.
+- 🧑‍🤝‍🧑 **Multi-Arena Support**: Host multiple matches in parallel across different worlds.
+- 🎯 **8 Customizable Kits**: 4 per team, each with items, abilities, and kill rewards.
+- 🎮 **Game Modes**: Normal Mode is supported. Hardcore Mode (no respawns) is **coming soon**.
+- 💰 **Coins System**: Earn coins from kills and wins. Use them to unlock kits.
+- 🪓 **Throwable Weapons**: Bombardiers throw TNT, Berserkers throw axes.
+- ⚡ **Kill Rewards**: Grant players effects like Speed or Regeneration on kill (configurable).
+- 🔄 **Map Regeneration**: Breakable map elements (OAK_FENCES) reset after each game.
+- 🎨 **Fully Customizable**: Kits, messages, scoreboards, kill effects, and more.
+- 🧾 **Placeholders**: Integrate custom data into messages, holograms, and scoreboards.
+- ⏱️ **Autostart System**: Games start automatically with adjustable settings.
+- 🗺️ **Map Included**: A beautiful premade map is bundled with the plugin.
 
 ---
 
 ## 🚀 Getting Started
 
-Watch the full setup tutorial on YouTube:  
-📺 [Video Tutorial](https://youtu.be/vcgLJUzd73k)
+# 📺 **Video Tutorial**: [Watch on YouTube](https://youtu.be/vcgLJUzd73k)
 
-### 1. Set the Main Lobby Spawn
+### ✅ 1. Set the Main Lobby
 
 ```bash
 /setlobby
 ```
-> Requires `OP` status or `cs.admin` permission.
+> Requires `cs.admin` permission or OP.
 
 ---
 
-### 2. Import and Teleport to Arena World
+### 🗺️ 2. Import & Teleport to the Arena World
 
 ```bash
-/mv import arena normal
-/mv tp arena
+/mv import <arenaName> normal
+/mv tp <arenaName>
 ```
-> Requires [Multiverse-Core](https://www.spigotmc.org/resources/multiverse-core.390/) installed.
+> Requires [Multiverse-Core](https://www.spigotmc.org/resources/multiverse-core.390/).
 
 ---
 
-### 3. Create an Arena
+### 🏗️ 3. Create and Configure an Arena
 
 ```bash
 /arena create <arenaName>
-```
-
-**Example:**
-```bash
-/arena create arena1
-```
-
----
-
-### 4. Set Arena Locations
-
-Set the pre-game lobby for the arena:
-```bash
 /arena setlobby
+/arena setking
+/arena setattackers
+/arena setdefenders
 ```
 
-Set spawn locations for each role:
-```bash
-/arena setking
-/arena setdefenders
-/arena setattackers
-```
+> ⚠️ You must use `Attackers` and `Defenders` as internal team names, even if you use display names.
 
 ---
 
-### 5. Select Arena Regeneration Area
+### 📐 4. Set Arena Regeneration Region
 
-Use WorldEdit to define the regeneration area.
-
-**Steps:**
-1. Get a wand:
-   ```bash
-   //wand
-   ```
-2. Select two red wool markers placed in the map (as shown in the video).
-3. Use WorldEdit to select the region:
-   - Left-click = First position
-   - Right-click = Second position
-4. Copy the selection:
+1. Use WorldEdit or FAWE:
+   - Select 2 points using `//wand` on red wool markers provided in the map.
+2. Copy the selection:
    ```bash
    //copy
    ```
 
 ---
 
-### 6. Finalize Arena Setup
+### ✅ 5. Finalize the Arena
 
 ```bash
 /arena finish
@@ -98,49 +84,114 @@ Use WorldEdit to define the regeneration area.
 
 ---
 
-## ⚙️ Configuration Files
+## 📄 Commands
 
-Customize gameplay using the following files:
 
-- `arenas.yml` – Arena data and locations
-- `config.yml` – Core plugin settings
-- `scoreboards.yml` – Scoreboard layouts
-- `messages.yml` – All in-game messages (supports gradients!)
+### 🔧 Admin Commands
+
+| Command | Description |
+|--------|-------------|
+| `/arena <create|setlobby|setking|setattackers|setdefenders|finish>` | Manage arenas |
+| `/setlobby` | Set global lobby |
+| `/coins <add|remove|set> <player> <amount>` | Manage player coins |
+
+### 👤 Player Commands
+
+| Command | Description |
+|---------|-------------|
+| `/leave` | Leave the current arena |
+| `/stats` or `/stats <player>` *(Coming Soon)* | View player stats |
+| `/cs type` *(Coming Soon)* | Toggle between Normal and Hardcore mode |
 
 ---
 
-## 📛 Placeholders
+## 🧰 Configuration Files
 
-You can use the following placeholders in messages, scoreboards, or any text fields that support them:
+- `config.yml` – Core plugin settings
+- `arenas.yml` – Arena locations and settings
+- `kits.yml` – Define kits, ability items, and unlock costs
+- `custom_items.yml` – Define ability items used in kits
+- `killrewards.yml` – Effects granted on kill
+- `messages.yml` – Customize all plugin messages (supports gradients!)
+- `scoreboards.yml` – Customize per-phase scoreboards
+
+> 💡 All files support reloads and are fully commented for ease of use.
+
+---
+
+## 🎯 Kits
+
+- 4 Kits per team (total: 8), customizable in `kits.yml`.
+- Each kit includes:
+   - Items
+   - An ability item (customizable via `custom_items.yml`)
+   - Kill rewards (`killrewards.yml`)
+
+Players can unlock kits using in-game coins or admin commands.
+
+---
+
+## 💣 Throwable Weapons
+
+- **Berserkers** can throw axes (NOTE only GOLDEN_AXE is throwable).
+- **Bombardiers** can throw TNT:
+   - Destroys **OAK_FENCES** and damages nearby players.
+   - Regenerates after the match via FAWE/WorldEdit.
+
+---
+
+## 🧩 Placeholders
+
+Use these with PlaceholderAPI, holograms, scoreboards, and messages:
 
 | Placeholder | Description |
 |------------|-------------|
-| `%cs_timer%` | Returns the current game timer (e.g., remaining match time). |
-| `%cs_starting-in%` | Returns the countdown time until the game starts. |
-| `%cs_kills%` | Returns the number of kills the player has. |
-| `%cs_wins%` | Returns the number of wins the player has. |
-| `%cs_deaths%` | Returns the number of times the player has died. |
-| `%cs_coins%` | Returns the player's coin balance. |
-| `%cs_king%` | Returns the king's remaining health for the player’s team. |
-| `%cs_team%` | Returns the name of the player's current team (e.g., "Attackers"). |
-| `%cs_attackers_size%` | Returns the number of players currently on the attackers team. |
-| `%cs_defenders_size%` | Returns the number of players currently on the defenders team. |
-| `%cs_arena%` | Returns the name or ID of the arena the player is currently in. |
-| `%cs_arenasize%` | Returns the number of players in the current arena. |
-| `%cs_winner%` | Returns the name of the team that won the match (if available). |
-| `%cs_attackers%` | Returns the display name of the attackers team (e.g., "Red Team"). |
-| `%cs_defenders%` | Returns the display name of the defenders team (e.g., "Blue Team"). |
-| `%cs_kit%` | Returns the name of the selected kit for the player, or "No kit selected". |
+| `%cs_timer%` | Current game timer |
+| `%cs_starting-in%` | Countdown until game starts |
+| `%cs_kills%` | Player's kill count |
+| `%cs_wins%` | Player's win count |
+| `%cs_deaths%` | Player's death count |
+| `%cs_coins%` | Player's coin balance |
+| `%cs_king%` | King’s remaining health |
+| `%cs_team%` | Player’s team name |
+| `%cs_attackers_size%` | Attackers team size |
+| `%cs_defenders_size%` | Defenders team size |
+| `%cs_arena%` | Arena name |
+| `%cs_arenasize%` | Player count in arena |
+| `%cs_winner%` | Winning team name |
+| `%cs_attackers%` | Display name for attackers |
+| `%cs_defenders%` | Display name for defenders |
+| `%cs_kit%` | Player’s selected kit |
 
 ---
 
-## 🐛 Need Help?
+## 📦 Map
 
-If you encounter any bugs or need help, contact me:
-
-- Discord: **cbhud**
-- Support Server: [Join Discord](https://discord.gg/EC3gcUsGcV)
+- 📍 Coordinates: `X: 0 Y: 105 Z: 0`
+- 📥 Download: **Included with plugin**
+- 👷 Built by: `MATIASXD10` — [Discord Contact](https://discord.com/users/MATIASXD10)
 
 ---
 
-Made with ❤️ for the Minecraft community.
+## 🧪 Coming Soon (Beta Roadmap)
+
+- 📊 Player stats system
+- 🧠 Hardcore mode (no respawns)
+- 🩸 BossBar support for King health
+- GUI kit selector
+- Stats leaderboard
+
+---
+
+## 🙋 Need Help?
+
+If you find bugs, have ideas, or need support:
+
+- 💬 Discord: **cbhud**
+- 💻 Support Server: [Join Here](https://discord.gg/EC3gcUsGcV)
+
+> 💡 Please avoid using reviews for bug reports or feature requests — open a ticket or contact me directly.
+
+---
+
+Made with ❤️ by **cbhud** for the Minecraft community.
