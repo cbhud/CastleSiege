@@ -21,11 +21,8 @@
 ## **NEW Map Regeneration System and Free Map Download**
 - **Coordinates**: `X: 63 Y: 105 Z: -80`
 - **Download**: MAP IS INCLUDED IN DOWNLOAD WITH THE PLUGIN!
-- When you first start the game system saves all original locations of OAK FENCES
 - After each game, the map regenerates the oak fences that were destroyed during the match, restoring the battlefield for the next round.
 - The system will only remove or place the one that've been broken or placed when game started
-### **Just IN Case you have edited fences around map before the game STARTED you need to save fence locations **
-### **/cs save**
 ### **NOTE this is for now only POSSIBLE with OAK Fences**
 
 ## Images
