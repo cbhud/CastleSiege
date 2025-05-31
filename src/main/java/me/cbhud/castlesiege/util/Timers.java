@@ -53,9 +53,7 @@ public class Timers {
             } else {
                 cancelCountdown();
                 Bukkit.broadcastMessage(ChatColor.GREEN + "Starting the game!");
-                String command = "cs start";
-                ConsoleCommandSender console = Bukkit.getServer().getConsoleSender();
-                Bukkit.dispatchCommand(console, command);
+                plugin.getCommands().startGame();
                 this.isRunning = false;
             }
         }, 0L, 20L);

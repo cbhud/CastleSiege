@@ -32,7 +32,7 @@ public class BBar {
 
     public void removeBar() {
         if (this.adventure != null) {
-            this.adventure.close();
+            this.adventure.players().hideBossBar(this.bar);
             this.adventure = null;
         }
     }

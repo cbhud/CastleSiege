@@ -21,6 +21,7 @@ public class GameEndHandler implements Listener
     public void handleGameEnd() {
         this.plugin.getGame().setState(GameState.END);
         plugin.getMobManager().removeCustomZombie();
+        plugin.getBossBar().removeBar();
         if(getWinner() != null){setPlayerWins();}
         plugin.tntThrower().clearCooldowns();
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {

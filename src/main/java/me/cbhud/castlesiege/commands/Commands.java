@@ -119,41 +119,45 @@ public class Commands implements CommandExecutor {
 
         return true;
     }
+    public boolean startGame(){
+        if(plugin.getTimer().isRun()){
+            plugin.getTimer().cancelCountdown2();
+        }
 
-    private boolean startCommand(CommandSender sender) {
+        if (plugin.getLocationManager().getMobLocation() != null) {
+            plugin.getMobManager().spawnCustomMob();
+        } else {
+            Bukkit.broadcastMessage(ChatColor.RED + "King spawn location not set. Use /setkingspawn to set the location.");
+            return true;
+        }
+        plugin.getScoreboardManager().loadTeamCount();
+
+
+        plugin.getGame().setState(GameState.IN_GAME);
+        teleportTeamsToSpawnsAndApplyKits();
+
+        plugin.getTimer().startTimer(plugin.getConfig().getInt("timerMinutes", 10));
+
+        for (String line : plugin.getMessagesConfig().getStartMsg()) {
+            line = line.replace("{attackers}", plugin.getConfigManager().getAttacker());
+            line = line.replace("{defenders}", plugin.getConfigManager().getDefender());
+            Bukkit.broadcastMessage(line);
+        }
+        if (plugin.getGame().getType() == Type.Hardcore){
+            for (String line : plugin.getMessagesConfig().getHardCoreEnabledMsg()){
+                Bukkit.broadcastMessage(line);
+            }
+        }
+        return true;
+    }
+
+    public boolean startCommand(CommandSender sender) {
         if (sender instanceof ConsoleCommandSender || sender.hasPermission("cs.admin")) {
             if (plugin.getGame().getState() != GameState.LOBBY) {
             sender.sendMessage(ChatColor.RED + "The game is not in LOBBY STATE. You cannot start it now.");
             return true;
         }
-            if(plugin.getTimer().isRun()){
-                plugin.getTimer().cancelCountdown2();
-            }
-
-                if (plugin.getLocationManager().getMobLocation() != null) {
-                    plugin.getMobManager().spawnCustomMob();
-                } else {
-                    Bukkit.broadcastMessage(ChatColor.RED + "King spawn location not set. Use /setkingspawn to set the location.");
-                    return true;
-                }
-            plugin.getScoreboardManager().loadTeamCount();
-
-
-            plugin.getGame().setState(GameState.IN_GAME);
-                teleportTeamsToSpawnsAndApplyKits();
-
-                plugin.getTimer().startTimer(plugin.getConfig().getInt("timerMinutes", 10));
-
-                for (String line : plugin.getMessagesConfig().getStartMsg()) {
-                    line = line.replace("{attackers}", plugin.getConfigManager().getAttacker());
-                    line = line.replace("{defenders}", plugin.getConfigManager().getDefender());
-                    Bukkit.broadcastMessage(line);
-                }
-                if (plugin.getGame().getType() == Type.Hardcore){
-                for (String line : plugin.getMessagesConfig().getHardCoreEnabledMsg()){
-                    Bukkit.broadcastMessage(line);
-                    }
-                }
+            startGame();
             }else {
             sender.sendMessage(ChatColor.RED + "You don't have permission for this command!");
                 }
@@ -191,9 +195,8 @@ public class Commands implements CommandExecutor {
                 if (teamSpawn != null) {
                     for (Player player : Bukkit.getOnlinePlayers()) {
                         if (plugin.getTeamManager().getTeam(player) == team) {
-                            // Call setPlayerAsPlaying directly (no need for extra scheduling)
+                            plugin.getPlayerManager().setPlayerAsPlaying(player);
                             Bukkit.getScheduler().runTask(plugin, () -> {
-                                plugin.getPlayerManager().setPlayerAsPlaying(player);
                                 player.teleport(teamSpawn);
                                 if (plugin.getConfigManager().getBossBar()){
                                 plugin.getBossBar().showZombieHealthBar(plugin.getMobManager().getKingZombie());

@@ -39,6 +39,7 @@ public class KitManager {
             List<String> kitItems = config.getStringList(path + ".kitItems");
             int price = config.getInt(path + ".price");
             Team team = Team.valueOf(config.getString(path + ".team"));
+            Boolean isDefault = config.getBoolean(path + ".default", false);
 
             List<ItemStack> items = new ArrayList<>();
 
@@ -61,7 +62,7 @@ public class KitManager {
                 }
             }
 
-            kits.add(new KitData(kitName, items, price, team));
+            kits.add(new KitData(kitName, items, price, team, isDefault));
         }
 
         return kits;
@@ -132,12 +133,14 @@ public class KitManager {
         private final List<ItemStack> items;
         private final int price;
         private final Team team;
+        private final Boolean isDefault;
 
-        public KitData(String name, List<ItemStack> items, int price, Team team) {
+        public KitData(String name, List<ItemStack> items, int price, Team team, Boolean isDefault) {
             this.name = name;
             this.items = items;
             this.price = price;
             this.team = team;
+            this.isDefault = isDefault;
         }
 
         public String getName() {

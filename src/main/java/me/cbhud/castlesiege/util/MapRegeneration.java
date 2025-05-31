@@ -41,7 +41,7 @@ public class MapRegeneration implements Listener {
                 event.getBlock().setType(Material.AIR);
             }
         }
-        if (player.hasPermission("cs.admin") || player.isOp() && plugin.getGame().getState() != GameState.IN_GAME){
+        if (player.hasPermission("cs.admin") && plugin.getGame().getState() != GameState.IN_GAME || player.isOp() && plugin.getGame().getState() != GameState.IN_GAME){
             event.setCancelled(false);
         }else {
             event.setCancelled(true);

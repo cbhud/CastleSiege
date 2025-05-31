@@ -102,7 +102,7 @@ public class PlayerKitManager {
         }
     }
 
-
+    //default kit treba maknut iz hardcoda
     public void setDefaultKit(Player player) {
         Team playerTeam = plugin.getTeamManager().getTeam(player);
         String defaultKitName;

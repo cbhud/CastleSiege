@@ -38,6 +38,7 @@ public class CastleSiege extends JavaPlugin
     private MessagesConfiguration messagesConfig;
     private TNTThrower tntThrower;
     private BBar bossBar;
+    private Commands commands;
 
     public void onEnable() {
 
@@ -63,7 +64,8 @@ public class CastleSiege extends JavaPlugin
         this.getCommand("kit").setExecutor(new UnlockKitCommand(this));
         this.getCommand("stats").setExecutor(new StatsCommand(this));
         this.getCommand("coins").setExecutor(new CoinsCommand(this));
-        this.getCommand("cs").setExecutor(new Commands(this));
+        commands = new Commands(this);
+        this.getCommand("cs").setExecutor(commands);
         this.getServer().getPluginManager().registerEvents(new PlayerConnection(this), this);
         this.getServer().getPluginManager().registerEvents(new PlayerDeathHandler(this), (Plugin)this);
         this.getServer().getPluginManager().registerEvents(new DamageListener(this), (Plugin)this);
@@ -141,4 +143,7 @@ public class CastleSiege extends JavaPlugin
     public LocationManager getLocationManager(){return  locationManager;}
     public MessagesConfiguration getMessagesConfig(){return messagesConfig;}
     public BBar getBossBar(){return  bossBar;}
+    public Commands getCommands() {
+        return commands;
+    }
 }
