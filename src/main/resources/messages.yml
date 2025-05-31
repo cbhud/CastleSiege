@@ -1,0 +1,221 @@
+join-server-msg:
+  - "&eWelcome %player_name% to the &bCastle Siege"
+  - "&eEnjoy your stay!"
+no-perm-msg:
+  - "&cYou don't have permission for this command!"
+attackers-win-msg:
+  - "&cAttackers won!"
+defenders-win-msg:
+  - "&bDefenders won!"
+game-start-msg:
+  - "&7&m--------------------------"
+  - "&b%cs_defenders% &fmust defend the King."
+  - "&b%cs_defenders% &fwin when countdown is over."
+  - ""
+  - "&c%cs_attackers% &fmust kill the King."
+  - "&c%cs_attackers% &flose when countdown is over."
+  - ""
+  - "&aThe game has started!"
+  - "&7&m--------------------------"
+tntCooldown:
+  - "&cYou can throw tnt again in {cooldown} seconds."
+
+arenaEnded:
+ - "&cThis arena is currently not available"
+arenaFull:
+  - "&cArena is full"
+arenaJoin:
+  - "&aYou have joined the arena %cs_arena%"
+
+##ITEM MESSAGES THIS CAN ONLY BE 2 LINES
+selectArenaItem:
+  - "&aSelect Arena"
+  - "Right-click to select arena"
+selectTeamItem:
+  - "&eSelect Team"
+  - "&7Right-click to select team"
+selectKitItem:
+  - "&eSelect Kit"
+  - "&7Right-click to select the kit"
+leaveArenaItem:
+  - "&cLeave Arena"
+  - "&7Right-click to leave the arena"
+
+##ONELINE MESSAGES
+opposingTeamKit:
+  - "&cYou cannot select a kit from the opposing team!"
+
+starting-in:
+  - "&eStarting in &b%cs_starting-in% seconds."
+
+selectedKit:
+  - "&aYou have selected the {kit} kit!"
+
+lockedKit:
+  - "&cYou do not have this kit unlocked. Right-click to purchase it."
+
+customitem-cooldown:
+  - "&cYou can use this item again in {seconds} seconds."
+
+selectTeamGui:
+  - "&eSelect Team"
+
+leaveArena:
+  - "&cYou have left the arena!"
+
+wizardAttackSpell:
+  - "&6Your spell has struck your opponents with powerful magic!"
+
+wizardSupportSpell:
+  - "&aYou have cast a supportive spell, empowering your nearby allies!"
+
+alredayOwnKit:
+  - "&aYou alreday own this kit!"
+
+purchaseKitSuccess:
+  - "&aYou have successfully purchased the {kitname} kit!"
+
+purchaseKitUnsuccess:
+  - "&cYou do not have enough coins."
+
+
+##TITLES ARE 2 LINE MESSAGES FIRST ONE IS TOP TITLE AND SECOND ONE IS BOTTOM
+spectatorTitle:
+  - "&8You are now spectating!"
+  - "&7Please wait until game finishes or /leave"
+attackersTitle:
+  - "&4&lAttack Begins!"
+  - "&cHunt down and defeat the King!"
+defendersTitle:
+  - "&2&lDefend the Fortress!"
+  - "&aKeep the King safe at all costs!"
+  -
+defendersWinTitle:
+  - "&2&lVictory for the Defenders!"
+  - "&aThe King has been protected!"
+  -
+attackersWinTitle:
+  - "&4&lThe Throne Has Fallen!"
+  - "&cThe King has been slain!"
+
+respawnTitle:
+  - "&cYou died!"
+  - "&7Respawning in... 5 seconds"
+
+##GUI TRANSLATIONS
+select-arena-in-gui:
+  - "&eSelect Arena"
+
+##ARENA GUI STATUS MESSAGES
+in-game-status:
+  - "&aIn Game"
+
+waiting-status:
+  - "&e&lWaiting for players..."
+
+restarting-status:
+  - "&4&lRestarting..."
+
+unknown-status:
+  - "&c&lUnknown State"
+
+##THIS MESSAGE NEEDS TO STAY IN FORMAT LIKE THIS!!
+arena-hover-gui:
+  - ""
+  - "&bPlayers: {players}"
+  - "&bStatus: {status}"
+  - ""
+  - "&7Click to join!"
+
+##KIT GUI
+kitgui:
+  - "&eSelect Kit"
+
+kit-name-display:
+  - "§r§c{kit}"
+
+kit-team-display:
+  - "§r§eTeam: {team}"
+
+kit-price-free:
+  - "§aFree"
+
+kit-price-coins:
+  - "§6{price} §ecoins"
+
+kit-lore-space-1:
+  - "§r"
+
+kit-lore-space-2:
+  - "§r"
+
+kit-left-click:
+  - "§r§7Left-click to select"
+
+kit-right-click:
+  - "§r§7Right-click to purchase"
+
+
+##TEAM SELECTOR
+teamgui:
+  - "&eSelect Team"
+
+team-selector-attackers:
+  - "§eAssassinate the King and conquer the castle!"
+
+team-selector-defenders:
+  - "§eProtect the King and hold the castle walls!"
+
+
+##FOR ITEMS
+
+items:
+  axe:
+    name: "§cThrowable Axe"
+    lore:
+      - "§7Right-click to throw"
+
+  spear:
+    name: "§cThrowable Spear"
+    lore:
+      - "§7Right-click to throw"
+
+  stew:
+    name: "§dMagic Stew"
+    lore:
+      - "§7Regenerates for 5 seconds"
+
+  rage:
+    name: "§cBerserker's Rage"
+    lore:
+      - "§7Gives special berserker effects"
+
+  ragnarok:
+    name: "§4Ragnarok"
+    lore:
+      - "§7Strength and resistance but slowness"
+
+  sight:
+    name: "§eSkald's Sight"
+    lore:
+      - "§7Gives special Skald effects"
+
+  harm:
+    name: "§eDamage Arrow"
+    lore:
+      - "§7Special effects when used"
+
+  sword:
+    name: "§dMystic Sword"
+    lore:
+      - "§70.06% chance to poison on damage"
+
+  attack:
+    name: "§cAttack Wand"
+    lore:
+      - "§7Cast mysterious spells on opponents!"
+
+  support:
+    name: "§aSupport Wand"
+    lore:
+      - "§7Cast mysterious spells to help teammates!"

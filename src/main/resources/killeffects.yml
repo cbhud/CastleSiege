@@ -1,0 +1,62 @@
+kits:
+  Marksman:
+    effects:
+      - give_item: SPECTRAL_ARROW
+        amount: 1
+      - type: SPEED
+        duration: 100
+        amplifier: 1
+
+  Spearman:
+    effects:
+      - type: SPEED
+        duration: 120
+        amplifier: 1
+
+  Wizard:
+    effects:
+      - type: ABSORPTION
+        duration: 100
+        amplifier: 1
+
+  Knight:
+    effects:
+      - type: REGENERATION
+        duration: 100
+        amplifier: 0
+      - type: ABSORPTION
+        duration: 100
+        amplifier: 0
+
+  Skald:
+    effects:
+      - type: REGENERATION
+        duration: 120
+        amplifier: 1
+      - type: ABSORPTION
+        duration: 120
+        amplifier: 0
+
+  Berserker:
+    effects:
+      - type: RESISTANCE
+        duration: 100
+        amplifier: 1
+      - type: REGENERATION
+        duration: 100
+        amplifier: 0
+
+  Bombardier:
+    effects:
+      - type: SPEED
+        duration: 100
+        amplifier: 0
+      - type: JUMP
+        duration: 100
+        amplifier: 1
+
+  Warrior:
+    effects:
+      - type: RESISTANCE
+        duration: 100
+        amplifier: 1

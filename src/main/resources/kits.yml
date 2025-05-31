@@ -1,0 +1,118 @@
+## FOR NOW YOU CAN ONLY CHANGE kitItems
+## YOU CAN ALSO MODIFY PRICES
+## I DO NOT RECOMMEND CHANGING TEAM FOR KIT FOR NOW
+## MORE CONFIGURATION OPTIONS WILL COME IN THE FUTURE
+kits:
+  Marksman:
+    kitItems:
+      - STONE_SWORD
+      - CROSSBOW
+      - ARROW:32
+      - CUSTOM_ITEM:stew
+      - CHAINMAIL_HELMET
+      - CHAINMAIL_CHESTPLATE
+      - CHAINMAIL_LEGGINGS
+      - CHAINMAIL_BOOTS
+    price: 0
+    team: Defenders
+    default: true
+    kitIcon: CROSSBOW
+
+  Spearman:
+    kitItems:
+      - IRON_SWORD
+      - CUSTOM_ITEM:spear
+      - CUSTOM_ITEM:stew
+      - CHAINMAIL_HELMET
+      - IRON_CHESTPLATE
+      - CHAINMAIL_LEGGINGS
+      - IRON_BOOTS
+    price: 30
+    team: Defenders
+    kitIcon: TRIDENT
+
+  Wizard:
+    kitItems:
+      - STONE_SWORD
+      - CUSTOM_ITEM:support
+      - CUSTOM_ITEM:attack
+      - CUSTOM_ITEM:stew
+      - CHAINMAIL_HELMET
+      - CHAINMAIL_CHESTPLATE
+      - LEATHER_LEGGINGS
+      - LEATHER_BOOTS
+    price: 45
+    team: Defenders
+    kitIcon: HONEY_BOTTLE
+
+
+  Knight:
+    kitItems:
+      - IRON_SWORD
+      - CUSTOM_ITEM:oathstone
+      - CUSTOM_ITEM:stew
+      - CHAINMAIL_HELMET
+      - IRON_CHESTPLATE
+      - CHAINMAIL_LEGGINGS
+      - IRON_BOOTS
+    price: 90
+    team: Defenders
+    kitIcon: SHIELD
+
+  Skald:
+    kitItems:
+      - STONE_SWORD
+      - BOW
+      - ARROW:32
+      - CUSTOM_ITEM:sight
+      - CUSTOM_ITEM:stew
+      - LEATHER_HELMET
+      - LEATHER_CHESTPLATE
+      - LEATHER_LEGGINGS
+      - LEATHER_BOOTS
+    price: 0
+    team: Attackers
+    default: true
+    kitIcon: BOW
+
+  Bombardier:
+    kitItems:
+      - STONE_SWORD
+      - TNT
+      - CUSTOM_ITEM:stew
+      - CUSTOM_ITEM:stew
+      - CHAINMAIL_HELMET
+      - CHAINMAIL_CHESTPLATE
+      - CHAINMAIL_LEGGINGS
+      - CHAINMAIL_BOOTS
+    price: 40
+    team: Attackers
+    kitIcon: TNT
+
+  Berserker:
+    kitItems:
+      - IRON_AXE
+      - CUSTOM_ITEM:axe
+      - CUSTOM_ITEM:rage
+      - CHAINMAIL_HELMET
+      - CHAINMAIL_CHESTPLATE
+      - CHAINMAIL_LEGGINGS
+      - CHAINMAIL_BOOTS
+    price: 65
+    team: Attackers
+    kitIcon: IRON_AXE
+
+
+
+  Warrior:
+    kitItems:
+      - IRON_SWORD
+      - CUSTOM_ITEM:ragnarok
+      - CUSTOM_ITEM:stew
+      - IRON_HELMET
+      - CHAINMAIL_CHESTPLATE
+      - IRON_LEGGINGS
+      - CHAINMAIL_BOOTS
+    price: 75
+    team: Attackers
+    kitIcon: IRON_SWORD

@@ -1,0 +1,41 @@
+lobby:
+  Title: "<#084CFB>C<#2468FB>a<#3F84FC>s<#5BA0FC>t<#76BBFC>l<#92D7FD>e <#ADF3FD>S<#ADF3FD>i<#ADF3FD>e<#ADF3FD>g<#ADF3FD>e"
+  lines:
+    - ""
+    - "&eOnline: %server_online%"
+    - "&aCoins: %cs_coins%"
+    - "&6Kills: %cs_kills%"
+    - "&cDeaths: %cs_deaths%"
+    - ""
+    - "&6IP: castlesiege.me"
+
+pre-game:
+  Title: "<#084CFB>C<#2468FB>a<#3F84FC>s<#5BA0FC>t<#76BBFC>l<#92D7FD>e <#ADF3FD>S<#ADF3FD>i<#ADF3FD>e<#ADF3FD>g<#ADF3FD>e"
+  lines:
+    - ""
+    - "&dArena: %cs_arena%"
+    - "&ePlayers: %cs_arenasize%"
+    - "&aCoins: %cs_coins%"
+    - "&aKit: %cs_kit%"
+    - "&bTeam: %cs_team%"
+    - ""
+    - "&6IP: castlesiege.me"
+
+in-game:
+  Title: "<#084CFB>C<#2468FB>a<#3F84FC>s<#5BA0FC>t<#76BBFC>l<#92D7FD>e <#ADF3FD>S<#ADF3FD>i<#ADF3FD>e<#ADF3FD>g<#ADF3FD>e"
+  lines:
+    - ""
+    - "&eTime Remaining: %cs_timer%"
+    - "&cKing's Health: %cs_king%"
+    - "&a%cs_defenders%: %cs_defenders_size%"
+    - "&b%cs_attackers%: %cs_attackers_size%"
+    - ""
+    - "&6IP: castlesiege.me"
+
+end:
+  Title: "<#084CFB>C<#2468FB>a<#3F84FC>s<#5BA0FC>t<#76BBFC>l<#92D7FD>e <#ADF3FD>S<#ADF3FD>i<#ADF3FD>e<#ADF3FD>g<#ADF3FD>e"
+  lines:
+    - ""
+    - "&aWinners: %cs_winner%"
+    - ""
+    - "&6IP: castlesiege.me"

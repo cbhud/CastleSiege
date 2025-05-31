@@ -1,0 +1,25 @@
+name: CastleSiege2
+version: '${project.version}'
+main: me.cbhud.castlesiege.CastleSiege
+author: cbhud
+api-version: '1.20'
+depend: [WorldEdit, Regenerato]
+softdepend:
+  - PlaceholderAPI
+  - FastAsyncWorldEdit
+commands:
+  setlobby:
+    description: Set the Main lobby location.
+    permission: cs.admin
+  leave:
+    description: Leave arena.
+  coins:
+    description: Main command for Castle Siege plugin.
+    usage: /coins <add | remove> <player> <amount>
+    aliases: []
+    permission: cs.admin
+  arena:
+    description: Main command for Castle Siege plugin.
+    usage: /arena <create/setlobby/setking/setdefenders/setattackers/finish>
+    aliases: []
+    permission: cs.admin

@@ -1,0 +1,116 @@
+#####
+#### DURATION IS IN TICKS 20 TICKS = 1 SECOND
+#### 100 / 20 = 5 seconds
+### COOLDOWN IS IN SECONDS
+items:
+  spear:
+    material: TRIDENT
+    name: "&bEpic Spear"
+    lore:
+      - "&7A mighty spear."
+    cooldown: 0
+    enchantments:
+      loyalty: 1
+    effects:
+
+  stew:
+    material: MUSHROOM_STEW
+    name: "&aHealing Stew"
+    lore:
+      - "&7Grants regeneration"
+    ##COOLDOWN 0 ON SOUP BECAUSE ITS EATEN AND REMOVED FROM INVENTORY
+    cooldown: 0
+    amount: 1
+    effects:
+      - type: REGENERATION
+        duration: 100
+        amplifier: 1
+
+  rage:
+    material: NETHER_WART
+    name: "&cRage Potion"
+    lore:
+      - "&7Speed & Strength boost"
+    cooldown: 45
+    amount: 1
+    effects:
+      - type: SPEED
+        duration: 100
+        amplifier: 2
+      - type: NAUSEA
+        duration: 100
+        amplifier: 0
+      - type: INCREASE_DAMAGE
+        duration: 100
+        amplifier: 0
+
+  ragnarok:
+    material: MAGMA_CREAM
+    name: "&6Ragnarok"
+    lore:
+      - "&7Powerful ancient ragnar fight effect"
+    amount: 1
+    effects:
+      - type: INCREASE_DAMAGE
+        duration: 100
+        amplifier: 0
+      - type: RESISTANCE
+        duration: 100
+        amplifier: 0
+      - type: SLOWNESS
+        duration: 100
+        amplifier: 1
+
+  sight:
+    material: FERMENTED_SPIDER_EYE
+    name: "&bSight"
+    lore:
+      - "&7Grants jump & night vision"
+    cooldown: 45
+    amount: 1
+    effects:
+      - type: JUMP
+        duration: 200
+        amplifier: 1
+      - type: NIGHT_VISION
+        duration: 100
+        amplifier: 1
+      - type: SPEED
+        duration: 100
+        amplifier: 1
+
+  oathstone:
+    material: PRISMARINE_SHARD
+    name: "&9Oathstone"
+    lore:
+      - "&7Sworn upon the honor of old kings."
+      - "&7Grants resistance and speed."
+      - "&8Cooldown: 45 seconds"
+    amount: 1
+    cooldown: 45
+    effects:
+      - type: RESISTANCE
+        duration: 160
+        amplifier: 1
+      - type: SPEED
+        duration: 100
+        amplifier: 0
+
+
+  ##ON THIS ITEMS BELOW YOU CAN JUST CHANGE NAME AND LORE
+  ##DO NOT CHANGE MATERIAL OR ITEM NAME
+  attack:
+    material: BLAZE_ROD
+    name: "&cWizard Attack Spell"
+    lore:
+      - "&7Deals damage to nearby enemies"
+  support:
+    material: STICK
+    name: "&aWizard Support Spell"
+    lore:
+      - "&7Heals and buffs nearby allies"
+  axe:
+    material: GOLDEN_AXE
+    name: "&eThrowable Axe"
+    lore:
+      - "&7Right-click to throw!"
