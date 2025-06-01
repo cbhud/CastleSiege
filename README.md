@@ -32,6 +32,8 @@ Castle Siege 2 is a complete overhaul and upgrade of the original Castle Siege m
 
 # 📺 **Video Tutorial**: [Watch on YouTube](https://youtu.be/vcgLJUzd73k)
 
+Once you download plugin folder, follow tutorial steps to set up Castle Siege 2 on your server:
+Note: You will receive all the necessary dependencies and map when you download the plugin.
 ### ✅ 1. Set the Main Lobby
 
 ```bash
