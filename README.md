@@ -1,5 +1,5 @@
 
-# 🏰 Castle Siege 2 — The Improved Version of Castle Siege!
+# Castle Siege 2 — The Improved Version of Castle Siege!
 
 ![Castle Siege 2](https://i.imgur.com/Zyt5Cpz.jpeg)
 
