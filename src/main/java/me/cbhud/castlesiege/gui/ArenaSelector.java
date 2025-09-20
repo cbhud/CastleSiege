@@ -13,6 +13,9 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class ArenaSelector {
 
@@ -42,13 +45,11 @@ public class ArenaSelector {
                 case IN_GAME:
                     woolMaterial = Material.GREEN_WOOL;
                     statusColor = ChatColor.GREEN;
-
                     status = plugin.getMsg().getGuiMessage("in-game-status").get(0);
                     break;
                 case WAITING:
                     woolMaterial = Material.LIME_WOOL;
                     statusColor = ChatColor.YELLOW;
-
                     status = plugin.getMsg().getGuiMessage("waiting-status").get(0);
                     break;
                 case ENDED:
@@ -63,23 +64,39 @@ public class ArenaSelector {
                     break;
             }
 
-            String msg1 = plugin.getMsg().getGuiMessage("arena-hover-gui").get(1);
-            msg1 = msg1.replace("{players}", String.valueOf(arena.getNoPlayers()));
-            String msg2 = plugin.getMsg().getGuiMessage("arena-hover-gui").get(2);
-            msg2 = msg2.replace("{status}", status);
+            // Get all lines from the config and process them dynamically
+            List<String> configLines = plugin.getMsg().getGuiMessage("arena-hover-gui");
+            List<Component> loreComponents = new ArrayList<>();
+
+            for (String line : configLines) {
+                // Replace all placeholders in each line
+                String processedLine = replacePlaceholders(line, arena, status);
+                loreComponents.add(Component.text(processedLine));
+            }
+
             GuiItem arenaItem = ItemBuilder.from(woolMaterial)
                     .name(Component.text(statusColor + arena.getId()))
-                    .lore(
-                            Component.text(plugin.getMsg().getGuiMessage("arena-hover-gui").get(0)),
-                            Component.text(msg1),
-                            Component.text(msg2),
-                            Component.text(plugin.getMsg().getGuiMessage("arena-hover-gui").get(3)),
-                            Component.text(plugin.getMsg().getGuiMessage("arena-hover-gui").get(4))
-                    )
+                    .lore(loreComponents)
                     .asGuiItem(event -> handleArenaSelection(event, arena));
 
             gui.setItem(slot++, arenaItem);
         }
+    }
+
+    // Method to replace all placeholders - works with your Messages class
+    private String replacePlaceholders(String text, Arena arena, String status) {
+        // Note: The Messages.getGuiMessage() already handles ChatColor.translateAlternateColorCodes
+        // so we don't need to worry about color codes here, just placeholder replacement
+        return text
+                .replace("{players}", String.valueOf(arena.getNoPlayers()))
+                .replace("{status}", status)
+                .replace("{arena}", arena.getId())
+                .replace("{map}", arena.getWorldName() != null
+                        ? arena.getWorldName().replaceAll("\\d", "")
+                        : "Unknown")
+                .replace("{type}", arena.isHardcore() ? "Hardcore" : "Normal")
+                // Add any other placeholders you need based on your Arena class methods
+                ;
     }
 
     // Removed synchronization here as well

@@ -5,6 +5,9 @@ maxPlayersPerTeam: 8
 attackersTeamName: Attackers
 defendersTeamName: Defenders
 
+##GLOBAL BOSSBAR
+bossbar-enabled: true
+
 ##ADJUST COINS PER KILL AND WIN
 coins-on-win: 3
 coins-on-kill: 1

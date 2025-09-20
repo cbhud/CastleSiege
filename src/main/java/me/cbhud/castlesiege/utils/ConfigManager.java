@@ -72,4 +72,7 @@ public class ConfigManager {
         return config.getInt("coins-on-win", 1);
     }
 
+    public boolean getBossBarEnabled() {
+        return  config.getBoolean("boss-bar.enabled", true);
+    }
 }

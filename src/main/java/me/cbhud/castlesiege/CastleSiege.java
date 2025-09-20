@@ -3,10 +3,9 @@ package me.cbhud.castlesiege;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import io.github.regenerato.Regenerato;
 import me.cbhud.castlesiege.arena.ArenaManager;
-import me.cbhud.castlesiege.cmd.CoinsCommand;
-import me.cbhud.castlesiege.cmd.CreateArenaCommand;
-import me.cbhud.castlesiege.cmd.LeaveArenaCommand;
-import me.cbhud.castlesiege.cmd.SetLobbyCommand;
+import me.cbhud.castlesiege.arena.ArenaResetManager;
+import me.cbhud.castlesiege.arena.ArenaTimerManager;
+import me.cbhud.castlesiege.cmd.*;
 import me.cbhud.castlesiege.event.*;
 import me.cbhud.castlesiege.gui.ArenaSelector;
 import me.cbhud.castlesiege.gui.KitSelector;
@@ -31,6 +30,7 @@ public final class CastleSiege extends JavaPlugin {
     ScoreboardManager scoreboardManager;
 
     ArenaManager arenaManager;
+    ArenaResetManager arenaResetManager;
 
     MobManager mobManager;
 
@@ -45,6 +45,7 @@ public final class CastleSiege extends JavaPlugin {
     ItemManager itemManager;
     DataManager dataManager;
     KillEffectManager killEffectManager;
+    BBar bossBar;
 
     @Override
     public void onEnable() {
@@ -55,6 +56,7 @@ public final class CastleSiege extends JavaPlugin {
         configManager = new ConfigManager(this);
         msg = new Messages(this);
         arenaManager = new ArenaManager(this);
+        arenaResetManager = new ArenaResetManager(this);
         worldEdit = (WorldEditPlugin) Bukkit.getPluginManager().getPlugin("WorldEdit");
         if (worldEdit == null) {
             getLogger().severe("Regenerato or FAWE plugin not found! Disabling plugin.");
@@ -64,8 +66,11 @@ public final class CastleSiege extends JavaPlugin {
         getCommand("arena").setExecutor(new CreateArenaCommand(this, arenaManager));
         arenaSelector = new ArenaSelector(this);
         teamSelector = new TeamSelector(this);
+
         getCommand("leave").setExecutor(new LeaveArenaCommand(this));
         getCommand("setlobby").setExecutor(slc = new SetLobbyCommand(this));
+        getCommand("stats").setExecutor(new StatsCommand(this));
+
         getServer().getPluginManager().registerEvents(new JoinEvent(this), this);
         getServer().getPluginManager().registerEvents(new DeathEvent(this), this);
         getServer().getPluginManager().registerEvents(new RightClickEffects(this), this);
@@ -86,6 +91,8 @@ public final class CastleSiege extends JavaPlugin {
         killEffectManager = new KillEffectManager(this);
         getCommand("coins").setExecutor(new CoinsCommand(this));
         getServer().getPluginManager().registerEvents(new TNTThrower(this), this);
+        bossBar = new BBar(this);
+        bossBar.setIsEnabled( getConfigManager().getBossBarEnabled());
     }
 
     @Override
@@ -129,9 +136,14 @@ public final class CastleSiege extends JavaPlugin {
         return arenaManager;
     }
 
+    public ArenaResetManager getArenaResetManager(){
+        return arenaResetManager;
+    }
+
     public ScoreboardManager getScoreboardManager(){
         return scoreboardManager;
     }
+
 
     public WorldEditPlugin getWorldEdit() {
         return worldEdit;
@@ -154,5 +166,9 @@ public final class CastleSiege extends JavaPlugin {
 
     public DataManager getDataManager() {
         return dataManager;
+    }
+
+    public BBar getBBar() {
+        return bossBar;
     }
 }

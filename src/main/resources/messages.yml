@@ -20,6 +20,16 @@ game-start-msg:
 tntCooldown:
   - "&cYou can throw tnt again in {cooldown} seconds."
 
+stats-msg:
+  - "&7&m-------------------"
+  - "&eStats for player: &b{cs_player_name}"
+  - "&aWins: &b{cs_wins}"
+  - "&dKills: &b{cs_kills}"
+  - "&cDeaths: &b{cs_deaths}"
+  - "&5K/D: &b{cs_kdr}"
+  - "&eCoins: &6{cs_coins}"
+  - "&7&m-------------------"
+
 arenaEnded:
  - "&cThis arena is currently not available"
 arenaFull:
@@ -83,6 +93,9 @@ purchaseKitUnsuccess:
 spectatorTitle:
   - "&8You are now spectating!"
   - "&7Please wait until game finishes or /leave"
+hardcoreDeathTitle:
+  - "&cYou died"
+  - "&eBetter luck next time! You can /leave"
 attackersTitle:
   - "&4&lAttack Begins!"
   - "&cHunt down and defeat the King!"
@@ -119,11 +132,13 @@ restarting-status:
 unknown-status:
   - "&c&lUnknown State"
 
-##THIS MESSAGE NEEDS TO STAY IN FORMAT LIKE THIS!!
+##THIS MESSAGE IS FREE FORMAT SINCE THE 2.0 INITIAL RELEASE
 arena-hover-gui:
   - ""
   - "&bPlayers: {players}"
   - "&bStatus: {status}"
+  - "&eMap: {map}"
+  - "&cType: {type}"
   - ""
   - "&7Click to join!"
 

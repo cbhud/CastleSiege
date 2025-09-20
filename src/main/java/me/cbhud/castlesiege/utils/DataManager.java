@@ -2,11 +2,14 @@ package me.cbhud.castlesiege.utils;
 
 import me.cbhud.castlesiege.CastleSiege;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.scheduler.BukkitRunnable;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -362,6 +365,73 @@ public class DataManager {
             return false;
         }
     }
+
+    public List<String> getTopWins() {
+        String sql = "SELECT username, wins FROM player_stats ORDER BY wins DESC LIMIT 10";
+        List<String> topWins = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement statement = conn.prepareStatement(sql);
+             ResultSet rs = statement.executeQuery()) {
+
+            while (rs.next()) {
+                String username = rs.getString("username");
+                int wins = rs.getInt("wins");
+                String formatted = ChatColor.translateAlternateColorCodes('&',
+                        "&e" + username + " &7- &a" + wins);
+                topWins.add(formatted);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return topWins;
+    }
+
+    public List<String> getTopDeaths() {
+        String sql = "SELECT username, deaths FROM player_stats ORDER BY wins DESC LIMIT 10";
+        List<String> topDeaths = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement statement = conn.prepareStatement(sql);
+             ResultSet rs = statement.executeQuery()) {
+
+            while (rs.next()) {
+                String username = rs.getString("username");
+                int deaths = rs.getInt("deaths");
+                String formatted = ChatColor.translateAlternateColorCodes('&',
+                        "&e" + username + " &7- &c" + deaths);
+                topDeaths.add(formatted);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return topDeaths;
+    }
+
+    public List<String> getTopKills() {
+        String sql = "SELECT username, kills FROM player_stats ORDER BY wins DESC LIMIT 10";
+        List<String> topKills = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement statement = conn.prepareStatement(sql);
+             ResultSet rs = statement.executeQuery()) {
+
+            while (rs.next()) {
+                String username = rs.getString("username");
+                int kills = rs.getInt("kills");
+                String formatted = ChatColor.translateAlternateColorCodes('&',
+                        "&e" + username + " &7- &b" + kills);
+                topKills.add(formatted);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return topKills;
+    }
+
 
     public Connection getConnection() {
         try {

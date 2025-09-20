@@ -50,6 +50,15 @@ public class Messages {
                 .collect(Collectors.toList());
     }
 
+    public List<String> getMessage(String key) {
+        if (!config.contains(key)) {
+            return List.of(ChatColor.RED + "Message not found: " + key);
+        }
+        return config.getStringList(key).stream()
+                .map(message -> ChatColor.translateAlternateColorCodes('&',message))
+                .collect(Collectors.toList());
+    }
+
     private String applyPlaceholders(Player player, String message) {
         if (plugin.getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             return PlaceholderAPI.setPlaceholders(player, message);

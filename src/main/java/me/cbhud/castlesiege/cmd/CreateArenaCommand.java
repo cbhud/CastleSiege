@@ -49,7 +49,7 @@ public class CreateArenaCommand implements CommandExecutor {
                     player.sendMessage("§cThis arena is already being set up.");
                     return true;
                 }
-                arenaSetup.put(arenaName, new Arena(plugin, arenaName, null, null, null, null, 16, 4, 60, 300, player.getWorld().getName()));
+                arenaSetup.put(arenaName, new Arena(plugin, arenaName, null, null, null, null, 16, 4, 60, 300, player.getWorld().getName(), false));
                 playerSetup.put(player.getUniqueId(), arenaName);
                 player.sendMessage("§aArena setup started! Now set the locations:");
                 player.sendMessage("§a/arena setlobby, /arena setking");

@@ -61,7 +61,8 @@ public class ArenaManager {
             int countdown = section.getInt("game-timer");
             int minPlayers = section.getInt("min-players");
             int maxPlayers = section.getInt("max-players");
-            Arena arena = new Arena(plugin, arenaId, lobbySpawn, kingSpawn, attackersSpawn, defendersSpawn, maxPlayers, minPlayers, autoStart, countdown, worldName);
+            boolean hardcore = section.getBoolean("hardcore");
+            Arena arena = new Arena(plugin, arenaId, lobbySpawn, kingSpawn, attackersSpawn, defendersSpawn, maxPlayers, minPlayers, autoStart, countdown, worldName, hardcore);
             arenas.put(arenaId, arena);
         }
     }
@@ -105,7 +106,7 @@ public class ArenaManager {
             return null;
         }
 
-        String locationString = section.getString("King-spawn");
+        String locationString = section.getString("king-spawn");
         if (locationString == null) {
             plugin.getLogger().warning("King spawn not set for arena '" + id + "'.");
             return null;
@@ -193,6 +194,7 @@ public class ArenaManager {
             }
 
             ConfigurationSection section = arenasSection.createSection(arena.getId());
+            section.set("hardcore", false);
             section.set("lobby-spawn", formatLocation(arena.getLSpawn()));
             section.set("king-spawn", formatLocation(arena.getKingSpawn()));
             section.set("defenders-spawn", formatLocation(arena.getDefendersSpawn()));
@@ -201,6 +203,7 @@ public class ArenaManager {
             section.set("game-timer", 300);
             section.set("min-players", arena.getMin());
             section.set("max-players", arena.getMax());
+
 
             // Save WorldEdit region info
             section.set("minX", minX);

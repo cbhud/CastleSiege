@@ -2,6 +2,7 @@ package me.cbhud.castlesiege.event;
 
 import me.cbhud.castlesiege.CastleSiege;
 
+import me.cbhud.castlesiege.arena.Arena;
 import me.cbhud.castlesiege.kit.KitManager;
 import me.cbhud.castlesiege.player.PlayerState;
 import me.cbhud.castlesiege.team.Team;
@@ -29,8 +30,7 @@ public class DeathEvent implements Listener {
 
             event.getDrops().clear();
 
-        player.sendTitle(plugin.getMsg().getMessage("respawnTitle", player).get(0), plugin.getMsg().getMessage("respawnTitle", player).get(1), 10, 70, 20);
-        player.setGameMode(GameMode.SPECTATOR);
+
             plugin.getDataManager().incrementDeaths(player.getUniqueId());
             if(event.getEntity().getKiller() != null) {
                 Player killer = event.getEntity().getKiller();
@@ -38,7 +38,27 @@ public class DeathEvent implements Listener {
                 plugin.getDataManager().incrementKills(killer.getUniqueId(), 1);
                 applyKillEffects(killer, plugin.getPlayerKitManager().getSelectedKit(killer));
             }
+
             Team team = plugin.getArenaManager().getArenaByPlayer(player.getUniqueId()).getTeam(player);
+
+            if (plugin.getArenaManager().getArenaByPlayer(player.getUniqueId()).isHardcore()) {
+                Arena arena = plugin.getArenaManager().getArenaByPlayer(player.getUniqueId());
+                player.sendTitle(plugin.getMsg().getMessage("hardcoreDeathTitle", player).get(0), plugin.getMsg().getMessage("hardcoreDeathTitle", player).get(1), 10, 70, 20);
+                player.setGameMode(GameMode.SPECTATOR);
+                arena.removeHardcore(player);
+                player.teleport(arena.getKingSpawn());
+                if (team == Team.Attackers && arena.getTeamManager().getPlayersInTeam(team) == 0) {
+                    arena.endGame();
+                }
+                return;
+            }else {
+                player.sendTitle(plugin.getMsg().getMessage("respawnTitle", player).get(0), plugin.getMsg().getMessage("respawnTitle", player).get(1), 10, 70, 20);
+                player.setGameMode(GameMode.SPECTATOR);
+            }
+
+
+
+
 
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 player.spigot().respawn();
