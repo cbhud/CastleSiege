@@ -167,6 +167,9 @@ public class Arena {
                     1.0f  // pitch
             );
             plugin.getMsg().getMessage("game-start-msg", player).forEach(player::sendMessage);
+            if (isHardcore()){
+            plugin.getMsg().getMessage("game-start-hardcore-msg-addition", player).forEach(player::sendMessage);
+            }
         });
         teleportTeamsToSpawns();
         timerManager.startCountdown();
@@ -333,11 +336,15 @@ public class Arena {
                         plugin.getPlayerKitManager().setDefaultKit(player);
                     }
                     plugin.getPlayerKitManager().giveKit(player, plugin.getPlayerKitManager().getSelectedKit(player));
-                    if (team == Team.Defenders) {
-                        player.sendTitle(plugin.getMsg().getMessage("defendersTitle", player).get(0), plugin.getMsg().getMessage("defendersTitle", player).get(1), 10, 70, 20);
-                    } else {
-                        player.sendTitle(plugin.getMsg().getMessage("attackersTitle", player).get(0), plugin.getMsg().getMessage("attackersTitle", player).get(1), 10, 70, 20);
-                    }
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                        if (team == Team.Defenders) {
+                            player.sendTitle(plugin.getMsg().getMessage("defendersTitle", player).get(0),
+                                    plugin.getMsg().getMessage("defendersTitle", player).get(1), 10, 70, 20);
+                        } else {
+                            player.sendTitle(plugin.getMsg().getMessage("attackersTitle", player).get(0),
+                                    plugin.getMsg().getMessage("attackersTitle", player).get(1), 10, 70, 20);
+                        }
+                    }, 20L);
 
                 }));
             }

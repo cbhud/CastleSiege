@@ -17,6 +17,9 @@ game-start-msg:
   - ""
   - "&aThe game has started!"
   - "&7&m--------------------------"
+##THIS HARDCORE MESSAGE ADDITION WILL SHOW BELOW GAME START MESSAGE IF GAME IS IN HARDCORE MODE ALSO IT CAN BE MULTILINE
+game-start-hardcore-msg-addition:
+  - "&7(&c!!!&7) &eThis game is in hardcore mode if you die you wont respawn"
 tntCooldown:
   - "&cYou can throw tnt again in {cooldown} seconds."
 
@@ -93,20 +96,23 @@ purchaseKitUnsuccess:
 spectatorTitle:
   - "&8You are now spectating!"
   - "&7Please wait until game finishes or /leave"
+
 hardcoreDeathTitle:
   - "&cYou died"
   - "&eBetter luck next time! You can /leave"
+
 attackersTitle:
   - "&4&lAttack Begins!"
   - "&cHunt down and defeat the King!"
+
 defendersTitle:
   - "&2&lDefend the Fortress!"
   - "&aKeep the King safe at all costs!"
-  -
+
 defendersWinTitle:
   - "&2&lVictory for the Defenders!"
   - "&aThe King has been protected!"
-  -
+
 attackersWinTitle:
   - "&4&lThe Throne Has Fallen!"
   - "&cThe King has been slain!"

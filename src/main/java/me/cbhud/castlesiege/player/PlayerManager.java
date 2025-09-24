@@ -76,7 +76,7 @@ public class PlayerManager {
             playerStates.put(player, WAITING);
             player.getInventory().setItem(8, ItemBuilder.from(Material.RED_DYE)
                     .name(Component.text(plugin.getMsg().getMessage("leaveArenaItem", player).get(0)))
-                    .lore(Component.text(plugin.getMsg().getMessage("leaveArenaItem", player).get(0)))
+                    .lore(Component.text(plugin.getMsg().getMessage("leaveArenaItem", player).get(1)))
                     .build());
             playerStates.put(player, WAITING);
 

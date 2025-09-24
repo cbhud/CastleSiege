@@ -1,5 +1,5 @@
-name: CastleSiege2
-version: '2.0-BETA-FINAL'
+name: CastleSiege
+version: '2.0'
 main: me.cbhud.castlesiege.CastleSiege
 author: cbhud
 api-version: '1.20'
@@ -28,3 +28,11 @@ commands:
     description: View player statistics
     usage: /stats [player]
     aliases: [ statistics, playerstats ]
+  join:
+    description: Join a specific Castle Siege arena
+    usage: /<command> <arenaName>
+    aliases: []
+  randomjoin:
+    description: Join a random Castle Siege arena
+    usage: /<command>
+    aliases: []

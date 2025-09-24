@@ -93,6 +93,10 @@ public final class CastleSiege extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new TNTThrower(this), this);
         bossBar = new BBar(this);
         bossBar.setIsEnabled( getConfigManager().getBossBarEnabled());
+
+        JoinArenaCommand joinArenaCommand = new JoinArenaCommand(this);
+        this.getCommand("join").setExecutor(joinArenaCommand);
+        this.getCommand("randomjoin").setExecutor(joinArenaCommand);
     }
 
     @Override
