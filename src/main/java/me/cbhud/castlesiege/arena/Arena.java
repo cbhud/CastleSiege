@@ -161,11 +161,6 @@ public class Arena {
             if (plugin.getBBar().isEnabled()) {
             plugin.getBBar().showZombieHealthBarToPlayer(plugin.getMobManager().getKingZombie(getKSpawn().getWorld()), player);
             }
-            player.playSound(player.getLocation(),
-                    Sound.ENTITY_ENDER_DRAGON_GROWL,
-                    1.0f, // volume
-                    1.0f  // pitch
-            );
             plugin.getMsg().getMessage("game-start-msg", player).forEach(player::sendMessage);
             if (isHardcore()){
             plugin.getMsg().getMessage("game-start-hardcore-msg-addition", player).forEach(player::sendMessage);
@@ -344,6 +339,11 @@ public class Arena {
                             player.sendTitle(plugin.getMsg().getMessage("attackersTitle", player).get(0),
                                     plugin.getMsg().getMessage("attackersTitle", player).get(1), 10, 70, 20);
                         }
+                        player.playSound(player.getLocation(),
+                                Sound.ENTITY_ENDER_DRAGON_GROWL,
+                                1.0f, // volume
+                                1.0f  // pitch
+                        );
                     }, 20L);
 
                 }));

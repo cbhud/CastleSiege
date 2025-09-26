@@ -46,7 +46,7 @@ public class DeathEvent implements Listener {
                 player.sendTitle(plugin.getMsg().getMessage("hardcoreDeathTitle", player).get(0), plugin.getMsg().getMessage("hardcoreDeathTitle", player).get(1), 10, 70, 20);
                 player.setGameMode(GameMode.SPECTATOR);
                 arena.removeHardcore(player);
-                player.teleport(arena.getKingSpawn());
+                player.teleport(arena.getKSpawn());
                 if (team == Team.Attackers && arena.getTeamManager().getPlayersInTeam(team) == 0) {
                     arena.endGame();
                 }
@@ -55,9 +55,6 @@ public class DeathEvent implements Listener {
                 player.sendTitle(plugin.getMsg().getMessage("respawnTitle", player).get(0), plugin.getMsg().getMessage("respawnTitle", player).get(1), 10, 70, 20);
                 player.setGameMode(GameMode.SPECTATOR);
             }
-
-
-
 
 
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
