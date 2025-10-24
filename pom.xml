@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>me.cbhud</groupId>
-    <artifactId>CastleSiege2</artifactId>
-    <version>2.0-BETA-2</version>
+    <artifactId>CastleSiege</artifactId>
+    <version>2.0.1</version>
     <packaging>jar</packaging>
 
-    <name>CastleSiege2</name>
+    <name>CastleSiege</name>
 
     <properties>
         <java.version>1.8</java.version>
@@ -135,7 +135,7 @@
         <dependency>
             <groupId>dev.triumphteam</groupId>
             <artifactId>triumph-gui</artifactId>
-            <version>3.1.12</version>
+            <version>3.1.13</version>
         </dependency>
 
         <dependency>
