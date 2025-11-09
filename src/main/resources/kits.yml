@@ -103,7 +103,6 @@ kits:
     kitIcon: IRON_AXE
 
 
-
   Warrior:
     kitItems:
       - IRON_SWORD

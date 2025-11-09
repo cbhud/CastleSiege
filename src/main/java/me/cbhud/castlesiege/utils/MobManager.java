@@ -50,7 +50,7 @@ public class MobManager implements Listener {
         kingZombie.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(maxHealth);
         kingZombie.setHealth(maxHealth);
 
-        kingZombie.getEquipment().setHelmet(new ItemStack(Material.GOLDEN_HELMET));
+        kingZombie.getEquipment().setHelmet(new ItemStack(Material.CARVED_PUMPKIN));
     }
 
     public double getZombieHealth(Zombie zombie) {

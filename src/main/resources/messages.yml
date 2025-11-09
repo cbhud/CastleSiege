@@ -187,6 +187,18 @@ team-selector-attackers:
 team-selector-defenders:
   - "§eProtect the King and hold the castle walls!"
 
+team-join:
+    - "&aYou have joined the {team}!"
+
+team-already-joined:
+    - "&cYou are already in this team!"
+
+team-full:
+    - "&cThis team is full!"
+
+team-balance:
+    - "&cYou cannot join this team because it would unbalance the teams!"
+
 
 ##FOR ITEMS
 

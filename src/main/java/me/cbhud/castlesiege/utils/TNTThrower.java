@@ -24,6 +24,7 @@ public class TNTThrower implements Listener {
     private CastleSiege plugin;
     private final Map<UUID, Long> cooldowns = new HashMap<>();
     private long COOLDOWN_DURATION;
+
     public TNTThrower(CastleSiege plugin) {
         this.plugin = plugin;
         this.COOLDOWN_DURATION = plugin.getConfigManager().getConfig().getInt("tntCooldown", 120) * 1000;
@@ -50,8 +51,8 @@ public class TNTThrower implements Listener {
             } else {
                 long remainingCooldown = COOLDOWN_DURATION - (currentTime - cooldowns.get(playerId));
                 int remainingCooldownSeconds = (int) (remainingCooldown / 1000);
-                for (String line : plugin.getMsg().getMessage("tntCooldown", player)){
-                    line = line.replace("{cooldown}","" + remainingCooldownSeconds);
+                for (String line : plugin.getMsg().getMessage("tntCooldown", player)) {
+                    line = line.replace("{cooldown}", "" + remainingCooldownSeconds);
                     player.sendMessage(line);
                 }
             }
@@ -62,21 +63,25 @@ public class TNTThrower implements Listener {
     public void onEntityExplode(EntityExplodeEvent event) {
         if (!(event.getEntity() instanceof TNTPrimed)) return;
 
-        boolean hasOakFence = false;
+        boolean hasFence = false;
         Iterator<Block> iterator = event.blockList().iterator();
 
         while (iterator.hasNext()) {
             Block block = iterator.next();
-            if (block.getType() == Material.OAK_FENCE) {
-                hasOakFence = true;
+            Material type = block.getType();
+
+            if (org.bukkit.Tag.FENCES.isTagged(type)) {  // <- works for all fences
+                hasFence = true;
             } else {
-                iterator.remove();
+                iterator.remove(); // everything else is protected
             }
         }
-        if (!hasOakFence) {
+
+        if (!hasFence) {
             event.setCancelled(true);
         }
     }
+
 
 
 }

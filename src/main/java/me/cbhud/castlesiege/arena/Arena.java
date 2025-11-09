@@ -104,16 +104,16 @@ public class Arena {
             return false;
         }
 
+        for (String i:  plugin.getMsg().getMessage("arenaJoin", player)){
+            player.sendMessage(i);
+        }
+
         if(!teamManager.tryRandomTeamJoin(player)){
             player.teleport(getKingSpawn());
             player.sendTitle(plugin.getMsg().getMessage("spectatorTitle", player).get(0), plugin.getMsg().getMessage("spectatorTitle", player).get(1), 10, 70, 20);
             players.add(player);
             plugin.getPlayerManager().setPlayerAsSpectating(player);
             return false;
-        }
-
-        for (String i:  plugin.getMsg().getMessage("arenaJoin", player)){
-            player.sendMessage(i);
         }
 
         players.add(player);
@@ -311,7 +311,7 @@ public class Arena {
     }
 
     public boolean joinTeam(Player p, Team t) {
-        teamManager.joinTeam(p, t);
+        teamManager.tryToJoinTeam(p, t);
         return true;
     }
 

@@ -91,7 +91,7 @@ public class BBar {
         BossBar bar = BossBar.bossBar(
                 title,
                 (float) (zombie.getHealth() / zombie.getMaxHealth()),
-                Color.RED,
+                Color.PURPLE,
                 Overlay.PROGRESS
         );
 

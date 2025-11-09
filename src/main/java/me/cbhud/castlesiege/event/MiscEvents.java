@@ -3,12 +3,14 @@ package me.cbhud.castlesiege.event;
 import me.cbhud.castlesiege.CastleSiege;
 import me.cbhud.castlesiege.player.PlayerState;
 import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerItemDamageEvent;
@@ -43,49 +45,48 @@ public class MiscEvents implements Listener {
         Player player = (Player) event.getEntity();
         if (player.isOp() || player.hasPermission("cs.admin")) return;
 
-        if (event.getItem().getItemStack().getType() == Material.OAK_FENCE && plugin.getPlayerManager().getPlayerState(player) == PlayerState.PLAYING) {
+        if (event.getItem().getItemStack().getType() == Material.OAK_FENCE || event.getItem().getItemStack().getType() == Material.SPRUCE_FENCE && plugin.getPlayerManager().getPlayerState(player) == PlayerState.PLAYING) {
             return;
         }
+
         event.setCancelled(true);
     }
 
 
+
+    private boolean canDoFence(Player player, Material type) {
+        if (player.hasPermission("cs.admin") || player.isOp()) return true;
+        return plugin.getPlayerManager().getPlayerState(player) == PlayerState.PLAYING
+                && Tag.WOODEN_FENCES.isTagged(type); // includes oak, spruce, birch, etc.
+    }
+
+    private boolean canDoCobweb(Player player, Material type) {
+        if (player.hasPermission("cs.admin") || player.isOp()) return true;
+        return plugin.getPlayerManager().getPlayerState(player) == PlayerState.PLAYING
+                && type == Material.COBWEB;
+    }
+
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
-        Player player = event.getPlayer();
-
-        // Allow if player is in PLAYING state and breaking an OAK_FENCE
-        if (plugin.getPlayerManager().getPlayerState(player) == PlayerState.PLAYING
-                && event.getBlock().getType() == Material.OAK_FENCE) {
-            return; // Exit early to avoid overriding
+        if (!canDoFence(event.getPlayer(), event.getBlock().getType()) && !canDoCobweb(event.getPlayer(), event.getBlock().getType())) {
+            event.setCancelled(true);
         }
-
-        // Allow if player has admin permissions or is OP
-        if (player.hasPermission("cs.admin") || player.isOp()) {
-            return;
-        }
-
-        // If none of the above conditions are met, cancel the event
-        event.setCancelled(true);
     }
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
-        Player player = event.getPlayer();
-
-        // Allow if player is in PLAYING state and placing an OAK_FENCE
-        if (plugin.getPlayerManager().getPlayerState(player) == PlayerState.PLAYING
-                && event.getBlock().getType() == Material.OAK_FENCE) {
-            return;
+        if (!canDoFence(event.getPlayer(), event.getBlockPlaced().getType())) {
+            event.setCancelled(true);
         }
+    }
 
-        // Allow if player has admin permissions or is OP
-        if (player.hasPermission("cs.admin") || player.isOp()) {
-            return;
+    @EventHandler
+    public void onNaturalRegeneration(EntityRegainHealthEvent event) {
+        if (event.getEntity() instanceof Player) {
+            if (event.getRegainReason() == EntityRegainHealthEvent.RegainReason.SATIATED) {
+                event.setAmount(0.1);
+            }
         }
-
-        // If none of the above conditions are met, cancel the event
-        event.setCancelled(true);
     }
 
 

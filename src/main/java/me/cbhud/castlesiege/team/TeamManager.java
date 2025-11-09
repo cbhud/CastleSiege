@@ -6,6 +6,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 public class TeamManager {
@@ -23,28 +24,96 @@ public class TeamManager {
         this.maxPlayersPerTeam = config.getInt("maxPlayersPerTeam", 16);
     }
 
-    public boolean joinTeam(Player player, Team newTeam) {
-        if (getPlayersInTeam(newTeam) >= maxPlayersPerTeam) {
-            return false; // Team is full
+    public boolean tryToJoinTeam(Player player, Team newTeam) {
+        if (newTeam == null) return false;
+
+        if (getPlayersInTeam(newTeam) >= maxPlayersPerTeam){
+            player.sendMessage(plugin.getMsg().getMessage("team-full").get(0));
+            return false;
         }
 
         Team previousTeam = getTeam(player);
 
         if (previousTeam == newTeam) {
-            return false; // Already in this team
+            player.sendMessage(plugin.getMsg().getMessage("team-already-joined").get(0));
+            return false;
         }
+
+        if (previousTeam == null) {
+            return joinTeam(player, newTeam);
+        }
+
+        int n = getPlayersInTeam(newTeam);
+        int p = getPlayersInTeam(previousTeam);
+        int delta = n - p;
+
+        if (delta < -3 || delta > -1) {
+            player.sendMessage(plugin.getMsg().getMessage("team-balance").get(0));
+            return false;
+        }
+
+        return joinTeam(player, newTeam);
+    }
+
+    private boolean joinTeam(Player player, Team newTeam) {
+        if (newTeam == null) return false;
+
+        Team previousTeam = getTeam(player);
+        if (previousTeam == newTeam) return false;
 
         if (previousTeam != null) {
-            removePlayerFromTeam(player); // Remove from previous team before switching
+            updateTeamCount(previousTeam, -1);
         }
 
-        // Assign player to new team
+        if (newTeam == Team.Defenders) {
+            player.sendMessage(plugin.getMsg().getMessage("team-join").get(0).replace("{team}", plugin.getConfigManager().getTeamName(Team.Defenders)));
+        } else if (newTeam == Team.Attackers) {
+            player.sendMessage(plugin.getMsg().getMessage("team-join").get(0).replace("{team}", plugin.getConfigManager().getTeamName(Team.Attackers)));
+        }
+
         playerTeams.put(player.getUniqueId().toString(), newTeam);
-        updateTeamCount(newTeam, 1); // Increase the count of the new team
+
+        updateTeamCount(newTeam, +1);
+
         plugin.getPlayerKitManager().setDefaultKit(player);
         plugin.getScoreboardManager().updateScoreboard(player, "pre-game");
 
         return true;
+    }
+
+    public boolean tryRandomTeamJoin(Player player) {
+        if (getTeam(player) != null) {
+            Team target = pickSmallerTeamWithRoom();
+            return target != null && tryToJoinTeam(player, target);
+        }
+
+        int a = getPlayersInTeam(Team.Attackers);
+        int d = getPlayersInTeam(Team.Defenders);
+
+        if (a >= maxPlayersPerTeam && d >= maxPlayersPerTeam) return false;
+
+        if (a > d && d < maxPlayersPerTeam) return tryToJoinTeam(player, Team.Defenders);
+        if (d > a && a < maxPlayersPerTeam) return tryToJoinTeam(player, Team.Attackers);
+
+        List<Team> options = new ArrayList<>(2);
+        if (a < maxPlayersPerTeam) options.add(Team.Attackers);
+        if (d < maxPlayersPerTeam) options.add(Team.Defenders);
+        if (options.isEmpty()) return false;
+
+        Team pick = options.get(ThreadLocalRandom.current().nextInt(options.size()));
+
+        return joinTeam(player, pick);
+    }
+
+    private Team pickSmallerTeamWithRoom() {
+        int a = getPlayersInTeam(Team.Attackers);
+        int d = getPlayersInTeam(Team.Defenders);
+        if (a > d && d < maxPlayersPerTeam) return Team.Defenders;
+        if (d > a && a < maxPlayersPerTeam) return Team.Attackers;
+
+        if (a < maxPlayersPerTeam) return Team.Attackers;
+        if (d < maxPlayersPerTeam) return Team.Defenders;
+        return null;
     }
 
     public Team getTeam(Player player) {
@@ -69,20 +138,6 @@ public class TeamManager {
         return (team == Team.Attackers) ? attackers : defenders;
     }
 
-    public boolean tryRandomTeamJoin(Player player) {
-        if (attackers >= maxPlayersPerTeam && defenders >= maxPlayersPerTeam) {
-            return false; // Both teams are full
-        }
-        Random random = new Random();
-        Team[] teams = {Team.Attackers, Team.Defenders};
-
-        while (true) {
-            Team team = teams[random.nextInt(teams.length)];
-            if (getPlayersInTeam(team) < maxPlayersPerTeam) {
-                return joinTeam(player, team);
-            }
-        }
-    }
 
     public void clearTeams() {
         playerTeams.clear();
@@ -90,7 +145,6 @@ public class TeamManager {
         defenders = 0;
     }
 
-    // Updates team count, ensuring the count never goes negative
     private void updateTeamCount(Team team, int change) {
         if (team == Team.Attackers) {
             attackers += change;
@@ -98,7 +152,6 @@ public class TeamManager {
             defenders += change;
         }
 
-        // Prevent negative values
         if (attackers < 0) attackers = 0;
         if (defenders < 0) defenders = 0;
     }

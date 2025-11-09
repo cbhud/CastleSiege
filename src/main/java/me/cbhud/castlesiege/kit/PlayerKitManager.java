@@ -83,13 +83,13 @@ public class PlayerKitManager {
 
         for (ItemStack item : items) {
             switch (item.getType()) {
-                case LEATHER_HELMET: case CHAINMAIL_HELMET: case IRON_HELMET: case DIAMOND_HELMET: case NETHERITE_HELMET:
+                case LEATHER_HELMET: case CHAINMAIL_HELMET: case GOLDEN_HELMET: case IRON_HELMET: case DIAMOND_HELMET: case NETHERITE_HELMET:
                     helmet = item; break;
-                case LEATHER_CHESTPLATE: case CHAINMAIL_CHESTPLATE: case IRON_CHESTPLATE: case DIAMOND_CHESTPLATE: case NETHERITE_CHESTPLATE:
+                case LEATHER_CHESTPLATE: case CHAINMAIL_CHESTPLATE: case GOLDEN_CHESTPLATE: case IRON_CHESTPLATE: case DIAMOND_CHESTPLATE: case NETHERITE_CHESTPLATE:
                     chestplate = item; break;
-                case LEATHER_LEGGINGS: case CHAINMAIL_LEGGINGS: case IRON_LEGGINGS: case DIAMOND_LEGGINGS: case NETHERITE_LEGGINGS:
+                case LEATHER_LEGGINGS: case CHAINMAIL_LEGGINGS: case GOLDEN_LEGGINGS: case IRON_LEGGINGS: case DIAMOND_LEGGINGS: case NETHERITE_LEGGINGS:
                     leggings = item; break;
-                case LEATHER_BOOTS: case CHAINMAIL_BOOTS: case IRON_BOOTS: case DIAMOND_BOOTS: case NETHERITE_BOOTS:
+                case LEATHER_BOOTS: case CHAINMAIL_BOOTS: case GOLDEN_BOOTS: case IRON_BOOTS: case DIAMOND_BOOTS: case NETHERITE_BOOTS:
                     boots = item; break;
                 default: break;
             }
