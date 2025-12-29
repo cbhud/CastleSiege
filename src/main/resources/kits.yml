@@ -8,6 +8,7 @@ kits:
       - STONE_SWORD
       - CROSSBOW
       - ARROW:32
+      - SNOWBALL:1
       - CUSTOM_ITEM:stew
       - CHAINMAIL_HELMET
       - CHAINMAIL_CHESTPLATE
@@ -22,6 +23,7 @@ kits:
     kitItems:
       - IRON_SWORD
       - CUSTOM_ITEM:spear
+      - SNOWBALL:1
       - CUSTOM_ITEM:stew
       - CHAINMAIL_HELMET
       - IRON_CHESTPLATE
@@ -36,6 +38,7 @@ kits:
       - STONE_SWORD
       - CUSTOM_ITEM:support
       - CUSTOM_ITEM:attack
+      - SNOWBALL:1
       - CUSTOM_ITEM:stew
       - CHAINMAIL_HELMET
       - CHAINMAIL_CHESTPLATE
@@ -50,6 +53,7 @@ kits:
     kitItems:
       - IRON_SWORD
       - CUSTOM_ITEM:oathstone
+      - SNOWBALL:1
       - CUSTOM_ITEM:stew
       - CHAINMAIL_HELMET
       - IRON_CHESTPLATE

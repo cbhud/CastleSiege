@@ -75,6 +75,7 @@ public final class CastleSiege extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new DeathEvent(this), this);
         getServer().getPluginManager().registerEvents(new RightClickEffects(this), this);
         getServer().getPluginManager().registerEvents(new DamageEvent(this), this);
+        Bukkit.getPluginManager().registerEvents(new SnowballHitEvent(this), this);
         teamManager = new TeamManager(this, this.getConfig());
         mobManager = new MobManager(this);
 

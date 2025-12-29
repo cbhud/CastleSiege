@@ -1,21 +1,12 @@
 package me.cbhud.castlesiege.event;
 
 import me.cbhud.castlesiege.CastleSiege;
-
 import me.cbhud.castlesiege.arena.Arena;
 import me.cbhud.castlesiege.kit.KitManager;
 import me.cbhud.castlesiege.player.PlayerState;
 import me.cbhud.castlesiege.team.Team;
-import org.bukkit.Bukkit;
-import org.bukkit.Color;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Particle;
-import org.bukkit.Particle.DustOptions;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.entity.Bat;
-import org.bukkit.entity.EntityType;
+import org.bukkit.*;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -39,10 +30,9 @@ public class DeathEvent implements Listener {
             return;
         }
 
-        // Keep your existing logic intact
         event.getDrops().clear();
 
-        // 🎃 NEW: Halloween death-side effects (randomized 1 of 3)
+        // ❄️ Winter death-side effects (sound only to victim)
         playRandomDeathEffects(player);
 
         plugin.getDataManager().incrementDeaths(player.getUniqueId());
@@ -51,17 +41,22 @@ public class DeathEvent implements Listener {
             plugin.getDataManager().addPlayerCoins(killer.getUniqueId(), plugin.getConfigManager().getCoinsOnKill());
             plugin.getDataManager().incrementKills(killer.getUniqueId(), 1);
 
-            // 🎃 NEW: Halloween killer-side effects (randomized 1 of 3)
-            playRandomKillerEffects(killer, player.getLocation());
-
             applyKillEffects(killer, plugin.getPlayerKitManager().getSelectedKit(killer));
+
+            // ❄️ Winter killer-side effects (sound only to killer)
+            // IMPORTANT: pass victim location (not killer location)
+            playRandomKillerEffects(killer, player.getLocation());
         }
 
         Team team = plugin.getArenaManager().getArenaByPlayer(player.getUniqueId()).getTeam(player);
 
         if (plugin.getArenaManager().getArenaByPlayer(player.getUniqueId()).isHardcore()) {
             Arena arena = plugin.getArenaManager().getArenaByPlayer(player.getUniqueId());
-            player.sendTitle(plugin.getMsg().getMessage("hardcoreDeathTitle", player).get(0), plugin.getMsg().getMessage("hardcoreDeathTitle", player).get(1), 10, 70, 20);
+            player.sendTitle(
+                    plugin.getMsg().getMessage("hardcoreDeathTitle", player).get(0),
+                    plugin.getMsg().getMessage("hardcoreDeathTitle", player).get(1),
+                    10, 70, 20
+            );
             player.setGameMode(GameMode.SPECTATOR);
             arena.removeHardcore(player);
             player.teleport(arena.getKSpawn());
@@ -70,7 +65,11 @@ public class DeathEvent implements Listener {
             }
             return;
         } else {
-            player.sendTitle(plugin.getMsg().getMessage("respawnTitle", player).get(0), plugin.getMsg().getMessage("respawnTitle", player).get(1), 10, 70, 20);
+            player.sendTitle(
+                    plugin.getMsg().getMessage("respawnTitle", player).get(0),
+                    plugin.getMsg().getMessage("respawnTitle", player).get(1),
+                    10, 70, 20
+            );
             player.setGameMode(GameMode.SPECTATOR);
         }
 
@@ -87,135 +86,196 @@ public class DeathEvent implements Listener {
     }
 
     // =========================
-    // 🎃 HALLOWEEN EFFECTS
+    // ❄️ WINTER / CHRISTMAS EFFECTS
     // =========================
 
-    /** Randomly plays one of three death-side effects at the victim’s location. */
+    /** Randomly plays one of three winter death-side effects at the victim’s location. */
     private void playRandomDeathEffects(Player victim) {
         int pick = ThreadLocalRandom.current().nextInt(3);
         switch (pick) {
-            case 0 -> deathSoulRelease(victim);
-            case 1 -> deathAshPuff(victim);
-            default -> deathGhostHiss(victim);
+            case 0 -> deathSnowPuff(victim);
+            case 1 -> deathCandyCaneSpiral(victim);
+            default -> deathWinterSpirit(victim);
         }
     }
 
-    /** Randomly plays one of three killer-side effects using both killer & victim locations. */
+    /** Randomly plays one of three winter killer-side effects using both killer & victim locations. */
     private void playRandomKillerEffects(Player killer, Location victimLoc) {
         int pick = ThreadLocalRandom.current().nextInt(3);
         switch (pick) {
-            case 0 -> killerSoulHarvest(killer, victimLoc);
-            case 1 -> killerBatBurst(killer, victimLoc);
-            default -> killerVampiricAura(killer);
+            case 0 -> killerJingleBurst(killer, victimLoc);
+            case 1 -> killerFrozenBeam(killer, victimLoc);
+            default -> killerSantasCheerAura(killer);
         }
     }
 
     // ------- Death-side variants -------
 
-    /** Soul Release: eerie death sound + rising soul-flame + 1–2 short-lived bats. */
-    private void deathSoulRelease(Player victim) {
+    /**
+     * (1) Snow Puff + Ice Shards:
+     * snowflake/cloud burst + icy sounds + small packed-ice shatter for depth.
+     */
+    private void deathSnowPuff(Player victim) {
+        Location loc = victim.getLocation().clone().add(0, 0.15, 0);
         World w = victim.getWorld();
-        Location loc = victim.getLocation().clone().add(0, 0.2, 0);
 
-        // Sound: phantom/vex death (soft, spooky)
-        w.playSound(loc, Sound.ENTITY_PHANTOM_DEATH, 0.7f, 0.7f);
+        // Sound only to victim
+        victim.playSound(loc, Sound.BLOCK_SNOW_BREAK, 0.8f, 1.1f);
+        victim.playSound(loc, Sound.BLOCK_GLASS_BREAK, 0.18f, 1.7f); // softer "shatter"
 
-        // Particles: a short vertical column of soul-flame drifting up
-        for (int i = 0; i < 6; i++) {
-            double yOff = 0.2 + (i * 0.25);
-            w.spawnParticle(Particle.SOUL_FIRE_FLAME, loc.clone().add(0, yOff, 0), 8, 0.15, 0.05, 0.15, 0.0);
+        // Quick snow burst + a bit of mist
+        w.spawnParticle(Particle.SNOWFLAKE, loc, 40, 0.6, 0.35, 0.6, 0.02);
+        w.spawnParticle(Particle.CLOUD, loc, 14, 0.4, 0.2, 0.4, 0.01);
+
+        // Gentle upward drift
+        for (int i = 0; i < 5; i++) {
+            double yOff = 0.15 + (i * 0.18);
+            w.spawnParticle(Particle.SNOWFLAKE, loc.clone().add(0, yOff, 0), 10, 0.25, 0.05, 0.25, 0.01);
         }
 
-        // 1–2 bats that immediately fly away and despawn
-        int bats = 1 + ThreadLocalRandom.current().nextInt(2);
-        for (int i = 0; i < bats; i++) {
-            Bat bat = (Bat) w.spawnEntity(loc, EntityType.BAT);
-            bat.setSilent(true);
-            // give a tiny nudge so they don't hang
-            Vector v = new Vector(ThreadLocalRandom.current().nextDouble(-0.2, 0.2), 0.4, ThreadLocalRandom.current().nextDouble(-0.2, 0.2));
-            bat.setVelocity(v);
-            Bukkit.getScheduler().runTaskLater(plugin, bat::remove, 40L); // 2 seconds
+        // Extra depth: tiny packed-ice shards at the end
+        BlockData ice = Material.PACKED_ICE.createBlockData();
+        w.spawnParticle(Particle.BLOCK_CRACK, loc, 12, 0.35, 0.12, 0.35, 0.08, ice);
+    }
+
+    /**
+     * (2) Candy Cane Spiral + Sparkle Pop:
+     * red/white dust spiral + chime + a small sparkle "pop" at the top.
+     */
+    private void deathCandyCaneSpiral(Player victim) {
+        World w = victim.getWorld();
+        Location base = victim.getLocation().clone().add(0, 0.15, 0);
+
+        // Sound only to victim
+        victim.playSound(base, Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.7f, 1.25f);
+
+        Particle.DustOptions red = new Particle.DustOptions(Color.fromRGB(200, 30, 40), 1.2f);
+        Particle.DustOptions white = new Particle.DustOptions(Color.fromRGB(245, 245, 245), 1.2f);
+
+        int points = 22;
+        double radius = 0.55;
+        for (int i = 0; i < points; i++) {
+            double t = (i / (double) points) * Math.PI * 3.6;
+            double y = 0.05 + (i * 0.06);
+            double r = radius * (1.0 - (i / (double) points) * 0.25);
+
+            Location p = base.clone().add(Math.cos(t) * r, y, Math.sin(t) * r);
+            w.spawnParticle(Particle.REDSTONE, p, 1, 0.0, 0.0, 0.0, 0.0, (i % 2 == 0) ? red : white);
+
+            if (i % 3 == 0) {
+                w.spawnParticle(Particle.FIREWORKS_SPARK, p, 2, 0.02, 0.02, 0.02, 0.0);
+            }
         }
+
+        // Sparkle pop at the top (depth)
+        Location top = base.clone().add(0, 1.25, 0);
+        w.spawnParticle(Particle.FIREWORKS_SPARK, top, 14, 0.18, 0.12, 0.18, 0.02);
+        w.spawnParticle(Particle.END_ROD, top, 3, 0.08, 0.05, 0.08, 0.0);
+
+        // Tiny "sparkle" sound only to victim
+        victim.playSound(top, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.35f, 1.8f);
     }
 
-    /** Ash Puff: respawn anchor deplete sting + ash/smoke burst. */
-    private void deathAshPuff(Player victim) {
+    /**
+     * (3) Winter Spirit (Aurora) + Soft Snow:
+     * end-rod wisps + icy-blue dust + bell + gentle snowfall curtain.
+     */
+    private void deathWinterSpirit(Player victim) {
         World w = victim.getWorld();
-        Location loc = victim.getLocation();
+        Location base = victim.getLocation().clone().add(0, 0.2, 0);
 
-        w.playSound(loc, Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, 0.7f, 1.0f);
-        // A quick ash cloud with some smoke
-        w.spawnParticle(Particle.ASH, loc, 30, 0.6, 0.4, 0.6, 0.01);
-        w.spawnParticle(Particle.SMOKE_NORMAL, loc, 12, 0.4, 0.2, 0.4, 0.01);
-    }
+        // Sound only to victim
+        victim.playSound(base, Sound.BLOCK_NOTE_BLOCK_BELL, 0.6f, 1.15f);
+        victim.playSound(base, Sound.BLOCK_AMETHYST_BLOCK_RESONATE, 0.18f, 1.35f); // very subtle
 
-    /** Ghost Hiss: soft hiss + faint end-rod wisps spiraling upward. */
-    private void deathGhostHiss(Player victim) {
-        World w = victim.getWorld();
-        Location base = victim.getLocation();
+        Particle.DustOptions icyBlue = new Particle.DustOptions(Color.fromRGB(120, 200, 255), 1.1f);
 
-        w.playSound(base, Sound.ENTITY_CAT_HISS, 0.35f, 1.2f);
-        // End-rod wisps rising in a small spiral
-        for (int i = 0; i < 10; i++) {
-            double t = i / 10.0 * Math.PI * 2;
-            double radius = 0.4;
-            Location p = base.clone().add(Math.cos(t) * radius, 0.15 + i * 0.08, Math.sin(t) * radius);
+        for (int i = 0; i < 14; i++) {
+            double t = (i / 14.0) * Math.PI * 2;
+            double r = 0.45;
+            Location p = base.clone().add(Math.cos(t) * r, 0.1 + i * 0.07, Math.sin(t) * r);
+
             w.spawnParticle(Particle.END_ROD, p, 2, 0.02, 0.02, 0.02, 0.0);
+            w.spawnParticle(Particle.REDSTONE, p, 1, 0.0, 0.0, 0.0, 0.0, icyBlue);
         }
+
+        // Soft snow curtain (depth)
+        Location snow = base.clone().add(0, 1.05, 0);
+        w.spawnParticle(Particle.SNOWFLAKE, snow, 22, 0.55, 0.25, 0.55, 0.01);
     }
 
     // ------- Killer-side variants -------
 
-    /** Soul Harvest: a quick soul-flame beam from victim to killer + subtle ritual sound. */
-    private void killerSoulHarvest(Player killer, Location victimLoc) {
+    /** Jingle Burst: bell + xp ping (to killer only). */
+    private void killerJingleBurst(Player killer, Location victimLoc) {
+        Location kLoc = killer.getLocation().clone().add(0, 1.0, 0);
+
+        // Sound only to killer
+        killer.playSound(kLoc, Sound.BLOCK_NOTE_BLOCK_BELL, 0.9f, 1.2f);
+        killer.playSound(kLoc, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.6f, 1.7f);
+
         World w = killer.getWorld();
-        Location kLoc = killer.getLocation().add(0, 1.2, 0);
+        w.spawnParticle(Particle.FIREWORKS_SPARK, kLoc, 26, 0.35, 0.35, 0.35, 0.03);
+        w.spawnParticle(Particle.SNOWFLAKE, victimLoc.clone().add(0, 0.2, 0), 18, 0.35, 0.25, 0.35, 0.02);
+    }
+
+    /**
+     * (5) Frozen Beam + Snow Pulse:
+     * beam line + extra pulse at victim start so it has a clear origin.
+     */
+    private void killerFrozenBeam(Player killer, Location victimLoc) {
+        World w = killer.getWorld();
+        Location kLoc = killer.getLocation().clone().add(0, 1.2, 0);
         Location vLoc = victimLoc.clone().add(0, 1.0, 0);
 
-        // Sound: ritualistic enchant tone on killer
-        w.playSound(kLoc, Sound.BLOCK_ENCHANTMENT_TABLE_USE, 0.6f, 0.8f);
+        // Sound only to killer
+        killer.playSound(kLoc, Sound.BLOCK_GLASS_PLACE, 0.6f, 1.35f);
+        killer.playSound(kLoc, Sound.ITEM_TRIDENT_RETURN, 0.35f, 1.6f);
+        killer.playSound(kLoc, Sound.BLOCK_SNOW_BREAK, 0.28f, 1.25f);
 
-        // Particle "beam" from victim to killer
+        // Pulse at victim start (depth)
+        w.spawnParticle(Particle.SNOWFLAKE, vLoc, 22, 0.25, 0.18, 0.25, 0.02);
+        w.spawnParticle(Particle.CLOUD, vLoc, 8, 0.18, 0.12, 0.18, 0.01);
+
         Vector dir = kLoc.toVector().subtract(vLoc.toVector());
-        int steps = 14;
+        int steps = 16;
         Vector step = dir.multiply(1.0 / steps);
+
         Location curr = vLoc.clone();
         for (int i = 0; i < steps; i++) {
             curr.add(step);
-            w.spawnParticle(Particle.SOUL_FIRE_FLAME, curr, 3, 0.02, 0.02, 0.02, 0.0);
+            w.spawnParticle(Particle.SNOWFLAKE, curr, 3, 0.02, 0.02, 0.02, 0.0);
+            if (i % 2 == 0) w.spawnParticle(Particle.END_ROD, curr, 1, 0.01, 0.01, 0.01, 0.0);
         }
     }
 
-    /** Bat Burst: a quick squeak/flap and 3 short-lived bats from the corpse. */
-    private void killerBatBurst(Player killer, Location victimLoc) {
+    /**
+     * (6) Santa’s Cheer Aura + Falling Confetti:
+     * red/green ring + sparkle + falling fireworks spark from above + tiny level-up ping.
+     */
+    private void killerSantasCheerAura(Player killer) {
         World w = killer.getWorld();
-        w.playSound(victimLoc, Sound.ENTITY_PHANTOM_FLAP, 0.8f, 0.9f);
-        w.playSound(victimLoc, Sound.ENTITY_WITCH_CELEBRATE, 0.4f, 1.1f);
+        Location loc = killer.getLocation().clone().add(0, 1.0, 0);
 
-        for (int i = 0; i < 3; i++) {
-            Bat bat = (Bat) w.spawnEntity(victimLoc, EntityType.BAT);
-            bat.setSilent(true);
-            Vector v = new Vector(ThreadLocalRandom.current().nextDouble(-0.25, 0.25), 0.45, ThreadLocalRandom.current().nextDouble(-0.25, 0.25));
-            bat.setVelocity(v);
-            Bukkit.getScheduler().runTaskLater(plugin, bat::remove, 40L); // 2s
-        }
-    }
+        // Sound only to killer
+        killer.playSound(loc, Sound.BLOCK_NOTE_BLOCK_BELL, 0.7f, 0.95f);
+        killer.playSound(loc, Sound.ENTITY_VILLAGER_CELEBRATE, 0.35f, 1.2f);
+        killer.playSound(loc, Sound.ENTITY_PLAYER_LEVELUP, 0.20f, 1.8f); // tiny "cheer" ping
 
-    /** Vampiric Aura: red dust swirl around the killer + low, dark tone. */
-    private void killerVampiricAura(Player killer) {
-        World w = killer.getWorld();
-        Location loc = killer.getLocation().add(0, 1.0, 0);
+        Particle.DustOptions red = new Particle.DustOptions(Color.fromRGB(200, 30, 40), 1.15f);
+        Particle.DustOptions green = new Particle.DustOptions(Color.fromRGB(40, 170, 60), 1.15f);
 
-        // Sound: dark, subtle pulse
-        w.playSound(loc, Sound.ENTITY_WARDEN_SONIC_BOOM, 0.2f, 0.5f);
-
-        // Particles: red dust ring that pops once
-        DustOptions red = new DustOptions(Color.fromRGB(190, 12, 40), 1.1f);
-        for (int i = 0; i < 16; i++) {
-            double t = (i / 16.0) * Math.PI * 2;
-            double r = 0.8;
+        for (int i = 0; i < 18; i++) {
+            double t = (i / 18.0) * Math.PI * 2;
+            double r = 0.85;
             Location p = loc.clone().add(Math.cos(t) * r, 0.0, Math.sin(t) * r);
-            w.spawnParticle(Particle.REDSTONE, p, 1, 0.02, 0.02, 0.02, 0.0, red);
+
+            w.spawnParticle(Particle.REDSTONE, p, 1, 0.0, 0.0, 0.0, 0.0, (i % 2 == 0) ? red : green);
+            if (i % 3 == 0) w.spawnParticle(Particle.SPELL_INSTANT, p, 2, 0.03, 0.03, 0.03, 0.0);
         }
+
+        // Falling confetti sparkle (depth)
+        Location above = loc.clone().add(0, 1.1, 0); // ~2.1 blocks above feet
+        w.spawnParticle(Particle.FIREWORKS_SPARK, above, 18, 0.45, 0.25, 0.45, 0.03);
     }
 }

@@ -196,14 +196,14 @@ public class Arena {
         if (attackersWon) {
             winner = 1;
             winningTeam = Team.Attackers;
-            winSound = Sound.ENTITY_WITHER_SPAWN;
+            winSound = Sound.ENTITY_ENDER_DRAGON_DEATH;
             winMessageKey = "attackers-win-msg";
             winTitleKey = "attackersWinTitle";
             timerManager.stopCountdown();
         } else {
             winner = 0;
             winningTeam = Team.Defenders;
-            winSound = Sound.ENTITY_PLAYER_LEVELUP;
+            winSound = Sound.UI_TOAST_CHALLENGE_COMPLETE;
             winMessageKey = "defenders-win-msg";
             winTitleKey = "defendersWinTitle";
             plugin.getMobManager().removeCustomZombie(this);
@@ -272,12 +272,12 @@ public class Arena {
             players.clear();
             teamManager.clearTeams();
 
-        }, 10 * 20L);
+        }, 15 * 20L);
 
         // Schedule arena reset
         Bukkit.getScheduler().runTaskLater(plugin, () ->
                         plugin.getArenaResetManager().resetArena(this),
-                20 * 20L
+                25 * 20L
         );
     }
 
@@ -340,7 +340,7 @@ public class Arena {
                                     plugin.getMsg().getMessage("attackersTitle", player).get(1), 10, 70, 20);
                         }
                         player.playSound(player.getLocation(),
-                                Sound.ENTITY_ENDER_DRAGON_GROWL,
+                                Sound.ENTITY_WITHER_SPAWN,
                                 1.0f, // volume
                                 1.0f  // pitch
                         );

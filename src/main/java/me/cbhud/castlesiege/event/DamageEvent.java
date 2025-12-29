@@ -1,14 +1,3 @@
-//kit icon??
-
-//teammanager class joinTeam pravi problem oko default kita
-//auto select default kit for team on random join treba oko skorborda proverit ne pise na sc??
-//kit logika na promjenu tima i join da setupa scoreboard malo kasnije ??
-//logika za set default kit nije dobra za oba tima daje isti kit jer je prvi ??
-//
-//nakon smrti give kit opet ++
-//team damage team treba test ++
-//proveri sta se desava sa joinom i itemima i stateom playera na join ++
-
 package me.cbhud.castlesiege.event;
 
 import me.cbhud.castlesiege.CastleSiege;
