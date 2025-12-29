@@ -1,5 +1,9 @@
 ##MAX PLAYERS IN TEAM
 maxPlayersPerTeam: 8
+##Max difference of numbers of players in teams
+maxTeamDiff: 1
+## FOR EXAMPLE WITH 1 IT CAN BE 7 ATTACKERS 6 DEFENDERS AND VICE VERSA
+## FOR EXAMPLE WITH 2 IT CAN BE 8 ATTACKERS 6 DEFENDERS AND VICE VERSA
 
 ##CHANGE TEAM NAMES
 attackersTeamName: Attackers

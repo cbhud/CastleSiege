@@ -148,7 +148,6 @@ public final class CastleSiege extends JavaPlugin {
         return scoreboardManager;
     }
 
-
     public WorldEditPlugin getWorldEdit() {
         return worldEdit;
     }

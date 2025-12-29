@@ -26,6 +26,11 @@ public class ConfigManager {
         }
 
         config = YamlConfiguration.loadConfiguration(configFile);
+        // Add defaults for nametag prefixes if missing
+        boolean changed = false;
+        if (!config.contains("attackersNametagPrefix")) { config.set("attackersNametagPrefix", "&c"); changed = true; }
+        if (!config.contains("defendersNametagPrefix")) { config.set("defendersNametagPrefix", "&b"); changed = true; }
+        if (changed) saveConfig();
     }
 
     public void saveConfig() {
@@ -75,4 +80,5 @@ public class ConfigManager {
     public boolean getBossBarEnabled() {
         return  config.getBoolean("boss-bar.enabled", true);
     }
+
 }

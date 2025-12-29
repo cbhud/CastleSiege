@@ -15,6 +15,7 @@ public class TeamManager {
     private int attackers;
     private int defenders;
     private final int maxPlayersPerTeam;
+    private final int maxTeamDiff;
 
     public TeamManager(CastleSiege plugin, FileConfiguration config) {
         this.plugin = plugin;
@@ -22,6 +23,7 @@ public class TeamManager {
         this.attackers = 0;
         this.defenders = 0;
         this.maxPlayersPerTeam = config.getInt("maxPlayersPerTeam", 16);
+        this.maxTeamDiff = config.getInt("maxTeamDiff", 1);
     }
 
     public boolean tryToJoinTeam(Player player, Team newTeam) {
@@ -45,12 +47,16 @@ public class TeamManager {
 
         int n = getPlayersInTeam(newTeam);
         int p = getPlayersInTeam(previousTeam);
-        int delta = n - p;
 
-        if (delta < -3 || delta > -1) {
+        int afterNew = n + 1;
+        int afterPrev = p - 1;
+
+        int diffAfter = afterNew - afterPrev; // positive => newTeam would be larger
+        if (Math.abs(diffAfter) > maxTeamDiff) {
             player.sendMessage(plugin.getMsg().getMessage("team-balance").get(0));
             return false;
         }
+
 
         return joinTeam(player, newTeam);
     }
@@ -82,39 +88,33 @@ public class TeamManager {
     }
 
     public boolean tryRandomTeamJoin(Player player) {
-        if (getTeam(player) != null) {
-            Team target = pickSmallerTeamWithRoom();
-            return target != null && tryToJoinTeam(player, target);
-        }
 
         int a = getPlayersInTeam(Team.Attackers);
         int d = getPlayersInTeam(Team.Defenders);
 
-        if (a >= maxPlayersPerTeam && d >= maxPlayersPerTeam) return false;
+        List<Team> candidates = new ArrayList<>(2);
 
-        if (a > d && d < maxPlayersPerTeam) return tryToJoinTeam(player, Team.Defenders);
-        if (d > a && a < maxPlayersPerTeam) return tryToJoinTeam(player, Team.Attackers);
+        // Would joining Attackers keep the post-join diff within tolerance and under cap?
+        if (a < maxPlayersPerTeam && Math.abs((a + 1) - d) <= maxTeamDiff) {
+            candidates.add(Team.Attackers);
+        }
 
-        List<Team> options = new ArrayList<>(2);
-        if (a < maxPlayersPerTeam) options.add(Team.Attackers);
-        if (d < maxPlayersPerTeam) options.add(Team.Defenders);
-        if (options.isEmpty()) return false;
+        // Would joining Defenders keep the post-join diff within tolerance and under cap?
+        if (d < maxPlayersPerTeam && Math.abs((d + 1) - a) <= maxTeamDiff) {
+            candidates.add(Team.Defenders);
+        }
 
-        Team pick = options.get(ThreadLocalRandom.current().nextInt(options.size()));
+        if (candidates.isEmpty()) {
+            // No valid spot without breaking balance/cap
+            player.sendMessage(plugin.getMsg().getMessage("team-full").get(0));
+            return false;
+        }
 
+        Team pick = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
         return joinTeam(player, pick);
     }
 
-    private Team pickSmallerTeamWithRoom() {
-        int a = getPlayersInTeam(Team.Attackers);
-        int d = getPlayersInTeam(Team.Defenders);
-        if (a > d && d < maxPlayersPerTeam) return Team.Defenders;
-        if (d > a && a < maxPlayersPerTeam) return Team.Attackers;
 
-        if (a < maxPlayersPerTeam) return Team.Attackers;
-        if (d < maxPlayersPerTeam) return Team.Defenders;
-        return null;
-    }
 
     public Team getTeam(Player player) {
         return playerTeams.get(player.getUniqueId().toString());
