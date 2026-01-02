@@ -99,6 +99,7 @@ items:
 
   ##ON THIS ITEMS BELOW YOU CAN JUST CHANGE NAME AND LORE
   ##DO NOT CHANGE MATERIAL OR ITEM NAME
+  ## THEY WILL REMAIN HARDCODED FOR NOW
   attack:
     material: BLAZE_ROD
     name: "&cWizard Attack Spell"

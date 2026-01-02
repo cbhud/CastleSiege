@@ -6,7 +6,6 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 public class TeamManager {
@@ -89,31 +88,39 @@ public class TeamManager {
 
     public boolean tryRandomTeamJoin(Player player) {
 
+        // If they're already assigned, don't re-assign
+        if (getTeam(player) != null) {
+            return true;
+        }
+
         int a = getPlayersInTeam(Team.Attackers);
         int d = getPlayersInTeam(Team.Defenders);
 
-        List<Team> candidates = new ArrayList<>(2);
+        // Preferred: smaller team; if equal -> Defenders (so it starts Defenders, then alternates)
+        Team preferred = (d <= a) ? Team.Defenders : Team.Attackers;
+        Team other = (preferred == Team.Defenders) ? Team.Attackers : Team.Defenders;
 
-        // Would joining Attackers keep the post-join diff within tolerance and under cap?
-        if (a < maxPlayersPerTeam && Math.abs((a + 1) - d) <= maxTeamDiff) {
-            candidates.add(Team.Attackers);
+        // Try preferred first
+        if (canJoin(preferred, a, d)) {
+            return joinTeam(player, preferred);
         }
 
-        // Would joining Defenders keep the post-join diff within tolerance and under cap?
-        if (d < maxPlayersPerTeam && Math.abs((d + 1) - a) <= maxTeamDiff) {
-            candidates.add(Team.Defenders);
+        // Fallback to the other team if preferred isn't possible due to cap/balance
+        if (canJoin(other, a, d)) {
+            return joinTeam(player, other);
         }
 
-        if (candidates.isEmpty()) {
-            // No valid spot without breaking balance/cap
-            player.sendMessage(plugin.getMsg().getMessage("team-full").get(0));
-            return false;
-        }
-
-        Team pick = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
-        return joinTeam(player, pick);
+        player.sendMessage(plugin.getMsg().getMessage("team-full").get(0));
+        return false;
     }
 
+    private boolean canJoin(Team team, int a, int d) {
+        if (team == Team.Attackers) {
+            return a < maxPlayersPerTeam && Math.abs((a + 1) - d) <= maxTeamDiff;
+        } else { // Defenders
+            return d < maxPlayersPerTeam && Math.abs((d + 1) - a) <= maxTeamDiff;
+        }
+    }
 
 
     public Team getTeam(Player player) {
