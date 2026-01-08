@@ -2,7 +2,7 @@
 # Introducing the exciting **Castle Siege** minigame!
 
 **Attack the Castle, or defend the King.**
-![Castle Siege2](i.imgur.com/KJ6rcgm.jpeg)
+![Castle Siege](https://i.imgur.com/KJ6rcgm.jpeg)
 
 ## **Seize or shield in Castle Siege. Your goal? Assassinate the King or protect the throne.**
 
