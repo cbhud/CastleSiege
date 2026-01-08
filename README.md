@@ -2,7 +2,7 @@
 # Introducing the exciting **Castle Siege** minigame!
 
 **Attack the Castle, or defend the King.**
-![Castle Siege2](https://i.imgur.com/9Wv93Ia.jpeg)
+![Castle Siege2](i.imgur.com/KJ6rcgm.jpeg)
 
 ## **Seize or shield in Castle Siege. Your goal? Assassinate the King or protect the throne.**
 
@@ -26,11 +26,6 @@ Castle Siege is a modern remake of the classic Mineplex minigame, with a focus o
 - **BossBar Support:** Each arena has bossbar for easier track of kings health.
 - **Placeholders:** Integrate custom placeholders into messages, holograms, and scoreboards.
 - **Stats & Leaderboards:** Track player's statistics using /stats also 3 different placeholders for leaderboards are included to make it more competitive. 
-
-**The Winter Special Features: **
-    - Winter/Christmas Map (included with plugin download)
-    - Kill/Death Effects (special winter/christmas effects randomized particles, sounds etc..)                                                                 
-    - Snowballs now apply a winter “aim disrupt” effect when they hit an enemy player (keeps the freeze screen effect (freezeTicks), adds a short Mining Fatigue (Slow Digging) and Slowness effect i set snowballs only for defenders but you can change it in kits.yml)
 
 ---
 
