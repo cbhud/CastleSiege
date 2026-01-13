@@ -6,12 +6,13 @@ import me.cbhud.castlesiege.player.PlayerState;
 import me.cbhud.castlesiege.team.Team;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
 
@@ -22,22 +23,25 @@ public class MobManager implements Listener {
     private final CastleSiege plugin;
     private Zombie kingZombie;
     private final double TNT_DAMAGE;
-    private String kingName;
+    private final String kingName;
 
     public MobManager(CastleSiege plugin) {
         this.plugin = plugin;
-        TNT_DAMAGE = plugin.getConfigManager().getConfig().getDouble("tntDamage", 3);
+        this.TNT_DAMAGE = plugin.getConfigManager().getConfig().getDouble("tntDamage", 3);
+        this.kingName = plugin.getConfigManager().getKingName();
+
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
-        kingName = plugin.getConfigManager().getKingName();
     }
 
     public void spawnCustomMob(Location l) {
+        if (l == null) return;
+        World w = l.getWorld();
+        if (w == null) return;
 
-        if (l == null) {
-            return;
-        }
+        Entity spawned = w.spawnEntity(l, EntityType.ZOMBIE);
+        if (!(spawned instanceof Zombie z)) return;
 
-        kingZombie = (Zombie) l.getWorld().spawnEntity(l, EntityType.ZOMBIE);
+        kingZombie = z;
 
         kingZombie.setCustomNameVisible(true);
         kingZombie.setCustomName("§6§lKing " + kingName);
@@ -47,11 +51,19 @@ public class MobManager implements Listener {
         kingZombie.setCanPickupItems(false);
         kingZombie.setRemoveWhenFarAway(false);
         kingZombie.setAdult();
+
         double maxHealth = plugin.getConfigManager().getKingHealth();
-        kingZombie.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(maxHealth);
+
+        AttributeInstance attr = kingZombie.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+        if (attr != null) {
+            attr.setBaseValue(maxHealth);
+        }
         kingZombie.setHealth(maxHealth);
 
-        kingZombie.getEquipment().setHelmet(new ItemStack(Material.GOLDEN_HELMET));
+        EntityEquipment eq = kingZombie.getEquipment();
+        if (eq != null) {
+            eq.setHelmet(new ItemStack(Material.GOLDEN_HELMET));
+        }
     }
 
     public double getZombieHealth(Zombie zombie) {
@@ -65,19 +77,41 @@ public class MobManager implements Listener {
         return zombie != null && zombie == kingZombie;
     }
 
+    private boolean looksLikeKing(Zombie z) {
+        if (z == null) return false;
+        String name = z.getCustomName();
+        return name != null && name.contains("King");
+    }
+
+    /**
+     * ✅ FIX #1: Return the actual king zombie.
+     * - If stored kingZombie is valid and in this world, return it.
+     * - Otherwise scan zombies in the given world and pick the one named "King".
+     */
     public Zombie getKingZombie(World world) {
-        for (Entity entity : world.getEntities()) {
-            if (entity instanceof Zombie && entity.getCustomName() != null) {
+        if (world == null) return null;
+
+        if (kingZombie != null && kingZombie.isValid() && !kingZombie.isDead()) {
+            if (kingZombie.getWorld().equals(world)) {
                 return kingZombie;
             }
         }
+
+        // Re-find by scanning zombies only (not all entities)
+        for (Zombie z : world.getEntitiesByClass(Zombie.class)) {
+            if (looksLikeKing(z)) {
+                kingZombie = z; // rebind reference for future calls
+                return z;
+            }
+        }
+
         return null;
     }
-
 
     @EventHandler
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
 
+        // ✅ TNT logic unchanged (as requested)
         if (event.getDamager() instanceof TNTPrimed) {
 
             if (event.getEntity() instanceof Zombie) {
@@ -91,48 +125,58 @@ public class MobManager implements Listener {
                 Player player = (Player) event.getEntity();
                 event.setDamage(TNT_DAMAGE);
             }
-
-
         }
 
-        if (event.getDamager() instanceof Player && event.getEntity() instanceof Zombie) {
-            Player damager = (Player) event.getDamager();
-            if (plugin.getPlayerManager().getPlayerState(damager.getPlayer()) != PlayerState.PLAYING){
+        // Player melee vs Zombie
+        if (event.getDamager() instanceof Player damager && event.getEntity() instanceof Zombie) {
+
+            if (plugin.getPlayerManager().getPlayerState(damager) != PlayerState.PLAYING) {
                 return;
             }
-                Team damagerTeam = plugin.getArenaManager().getArenaByPlayer(damager.getUniqueId()).getTeam(damager);
 
-            // Cancel event only if the damager is a Defender and the damaged entity is a Zombie
+            // ✅ FIX #3: null-safe arena lookup
+            Arena arena = plugin.getArenaManager().getArenaByPlayer(damager.getUniqueId());
+            if (arena == null) return;
+
+            Team damagerTeam = arena.getTeam(damager);
             if (damagerTeam == Team.Defenders) {
                 event.setCancelled(true);
             }
-        } else if (event.getDamager() instanceof Projectile) {
-            Projectile projectile = (Projectile) event.getDamager();
+            return;
+        }
 
-            if (projectile.getShooter() instanceof Player) {
-                Player shooter = (Player) projectile.getShooter();
-                Team shooterTeam = plugin.getArenaManager().getArenaByPlayer(shooter.getUniqueId()).getTeam(shooter);
+        // Projectile vs Zombie
+        if (event.getDamager() instanceof Projectile projectile && event.getEntity() instanceof Zombie) {
 
-                // Cancel event only if the shooter is a Defender and the damaged entity is a Zombie
-                if (shooterTeam == Team.Defenders && event.getEntity() instanceof Zombie) {
-                    event.setCancelled(true);
-                }
+            if (!(projectile.getShooter() instanceof Player shooter)) return;
+
+            // ✅ FIX #3: null-safe arena lookup
+            Arena arena = plugin.getArenaManager().getArenaByPlayer(shooter.getUniqueId());
+            if (arena == null) return;
+
+            Team shooterTeam = arena.getTeam(shooter);
+            if (shooterTeam == Team.Defenders) {
+                event.setCancelled(true);
             }
         }
     }
 
     public void removeCustomZombie(Arena arena) {
-        Location fireworkLoc = arena.getKingSpawn(); // fallback
+        if (arena == null) return;
 
-        for (LivingEntity entity : arena.getKingSpawn().getWorld().getLivingEntities()) {
-            if (entity instanceof Zombie && entity.getCustomName() != null && entity.getCustomName().contains("King")) {
-                fireworkLoc = entity.getLocation().clone();
-                entity.remove();
-                break; // only one king
+        Location kingSpawn = arena.getKingSpawn();
+        Location fireworkLoc = kingSpawn;
+
+        if (kingSpawn != null && kingSpawn.getWorld() != null) {
+            for (LivingEntity entity : kingSpawn.getWorld().getLivingEntities()) {
+                if (entity instanceof Zombie z && looksLikeKing(z)) {
+                    fireworkLoc = z.getLocation().clone();
+                    z.remove();
+                    break;
+                }
             }
         }
 
-        // 🎆 Celebrate defenders win (3–4 seconds)
         spawnWinFireworks(fireworkLoc);
     }
 
@@ -140,8 +184,8 @@ public class MobManager implements Listener {
         if (loc == null || loc.getWorld() == null) return;
 
         final int[] ticks = {0};
-        final int durationTicks = 80; // 4 seconds
-        final int period = 10;        // every 0.5 sec
+        final int durationTicks = 80;
+        final int period = 10;
 
         Bukkit.getScheduler().runTaskTimer(plugin, task -> {
             if (ticks[0] >= durationTicks) {
@@ -150,7 +194,6 @@ public class MobManager implements Listener {
             }
             ticks[0] += period;
 
-            // spawn 1 firework each burst
             Firework fw = loc.getWorld().spawn(loc.clone().add(0, 0.2, 0), Firework.class);
             FireworkMeta meta = fw.getFireworkMeta();
 
@@ -162,40 +205,61 @@ public class MobManager implements Listener {
 
             FireworkEffect effect = FireworkEffect.builder()
                     .with(type)
-                    .withColor(
-                            Color.RED, Color.GREEN, Color.WHITE,
-                            Color.AQUA, Color.YELLOW
-                    )
+                    .withColor(Color.RED, Color.GREEN, Color.WHITE, Color.AQUA, Color.YELLOW)
                     .withFlicker()
                     .withTrail()
                     .build();
 
             meta.clearEffects();
             meta.addEffect(effect);
-            meta.setPower(1); // small
+            meta.setPower(1);
             fw.setFireworkMeta(meta);
 
-            // detonate quickly so it looks like a celebration "pop" at the spot
             Bukkit.getScheduler().runTaskLater(plugin, fw::detonate, 8L);
 
         }, 0L, period);
     }
 
-
     @EventHandler
     public void onZombieDeath(final EntityDeathEvent event) {
         if (!(event.getEntity() instanceof Zombie zombie)) return;
-        if (zombie.getCustomName() == null || !zombie.getCustomName().contains("King")) return;
+        if (!looksLikeKing(zombie)) return;
 
         event.getDrops().clear();
 
-        playDragonLikeDeath(zombie.getLocation());
+        // Keep effects (but never allow them to prevent endGame)
+        try {
+            playDragonLikeDeath(zombie.getLocation());
+        } catch (Exception ex) {
+            plugin.getLogger().warning("King death effect failed: " + ex.getMessage());
+        }
+
+        // ✅ FIX #4: end game safely
+        Arena arena = null;
 
         Player killer = zombie.getKiller();
         if (killer != null) {
-            plugin.getArenaManager().getArenaByPlayer(killer.getUniqueId()).endGame();
+            arena = plugin.getArenaManager().getArenaByPlayer(killer.getUniqueId());
         }
 
+        // Fallback: 1 arena per world
+        if (arena == null) {
+            World w = zombie.getWorld();
+            String worldName = (w != null) ? w.getName() : null;
+
+            if (worldName != null) {
+                for (Arena a : plugin.getArenaManager().getArenas()) {
+                    if (worldName.equalsIgnoreCase(a.getWorldName())) {
+                        arena = a;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (arena != null) {
+            arena.endGame();
+        }
     }
 
     private void playDragonLikeDeath(Location center) {
@@ -203,8 +267,6 @@ public class MobManager implements Listener {
         if (w == null) return;
 
         w.spawnParticle(Particle.EXPLOSION_HUGE, center, 1, 0, 0, 0, 0);
-        w.spawnParticle(Particle.DRAGON_BREATH, center.clone().add(0, 0.5, 0),
-                80, 1.0, 0.6, 1.0, 0.02);
 
         final Location base = center.clone().add(0, 0.2, 0);
 
@@ -243,9 +305,4 @@ public class MobManager implements Listener {
             }
         }, 0L, 2L).getTaskId();
     }
-
-
-
-
-
 }

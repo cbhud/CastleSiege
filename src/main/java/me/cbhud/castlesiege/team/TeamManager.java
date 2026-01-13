@@ -6,37 +6,78 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class TeamManager {
     private final CastleSiege plugin;
-    private final Map<String, Team> playerTeams;
-    private int attackers;
-    private int defenders;
+
+    // Source of truth: UUID -> Team
+    private final Map<UUID, Team> playerTeams = new HashMap<>();
+
+    // Fast membership lookup without scanning online players
+    private final EnumMap<Team, Set<UUID>> teamMembers = new EnumMap<>(Team.class);
+
     private final int maxPlayersPerTeam;
     private final int maxTeamDiff;
 
     public TeamManager(CastleSiege plugin, FileConfiguration config) {
         this.plugin = plugin;
-        this.playerTeams = new HashMap<>();
-        this.attackers = 0;
-        this.defenders = 0;
         this.maxPlayersPerTeam = config.getInt("maxPlayersPerTeam", 16);
         this.maxTeamDiff = config.getInt("maxTeamDiff", 1);
+
+        // init sets
+        for (Team t : Team.values()) {
+            teamMembers.put(t, new HashSet<>());
+        }
     }
 
-    public boolean tryToJoinTeam(Player player, Team newTeam) {
-        if (newTeam == null) return false;
+    /* ---------------------- Core queries ---------------------- */
 
-        if (getPlayersInTeam(newTeam) >= maxPlayersPerTeam){
-            player.sendMessage(plugin.getMsg().getMessage("team-full").get(0));
+    public Team getTeam(Player player) {
+        if (player == null) return null;
+        return playerTeams.get(player.getUniqueId());
+    }
+
+    public int getPlayersInTeam(Team team) {
+        if (team == null) return 0;
+        return teamMembers.get(team).size();
+    }
+
+    /**
+     * Compatibility method: returns ONLINE players in this team, but without scanning Bukkit.getOnlinePlayers().
+     */
+    public Set<Player> getPlayersInTeams(Team team) {
+        if (team == null) return Collections.emptySet();
+
+        Set<Player> result = new HashSet<>();
+        for (UUID uuid : teamMembers.get(team)) {
+            Player p = Bukkit.getPlayer(uuid);
+            if (p != null && p.isOnline()) result.add(p);
+        }
+        return result;
+    }
+
+    /**
+     * New: returns UUIDs of all members of a team (online or offline).
+     * Great for rewards at endGame.
+     */
+    public Set<UUID> getTeamMemberIds(Team team) {
+        if (team == null) return Collections.emptySet();
+        return new HashSet<>(teamMembers.get(team));
+    }
+
+    /* ---------------------- Join logic ---------------------- */
+
+    public boolean tryToJoinTeam(Player player, Team newTeam) {
+        if (player == null || newTeam == null) return false;
+
+        if (getPlayersInTeam(newTeam) >= maxPlayersPerTeam) {
+            safeMsg(player, "team-full");
             return false;
         }
 
         Team previousTeam = getTeam(player);
-
         if (previousTeam == newTeam) {
-            player.sendMessage(plugin.getMsg().getMessage("team-already-joined").get(0));
+            safeMsg(player, "team-already-joined");
             return false;
         }
 
@@ -44,123 +85,114 @@ public class TeamManager {
             return joinTeam(player, newTeam);
         }
 
-        int n = getPlayersInTeam(newTeam);
-        int p = getPlayersInTeam(previousTeam);
+        // Balance check: simulate move
+        int newSize = getPlayersInTeam(newTeam);
+        int prevSize = getPlayersInTeam(previousTeam);
 
-        int afterNew = n + 1;
-        int afterPrev = p - 1;
+        int afterNew = newSize + 1;
+        int afterPrev = prevSize - 1;
 
-        int diffAfter = afterNew - afterPrev; // positive => newTeam would be larger
+        int diffAfter = afterNew - afterPrev;
         if (Math.abs(diffAfter) > maxTeamDiff) {
-            player.sendMessage(plugin.getMsg().getMessage("team-balance").get(0));
+            safeMsg(player, "team-balance");
             return false;
         }
-
 
         return joinTeam(player, newTeam);
     }
 
-    private boolean joinTeam(Player player, Team newTeam) {
-        if (newTeam == null) return false;
+    public boolean tryRandomTeamJoin(Player player) {
+        if (player == null) return false;
 
-        Team previousTeam = getTeam(player);
+        // Already assigned
+        if (getTeam(player) != null) return true;
+
+        int a = getPlayersInTeam(Team.Attackers);
+        int d = getPlayersInTeam(Team.Defenders);
+
+        Team preferred = (d <= a) ? Team.Defenders : Team.Attackers;
+        Team other = (preferred == Team.Defenders) ? Team.Attackers : Team.Defenders;
+
+        if (canJoin(preferred, a, d)) {
+            return joinTeam(player, preferred);
+        }
+        if (canJoin(other, a, d)) {
+            return joinTeam(player, other);
+        }
+
+        safeMsg(player, "team-full");
+        return false;
+    }
+
+    private boolean canJoin(Team team, int attackersSize, int defendersSize) {
+        if (team == Team.Attackers) {
+            return attackersSize < maxPlayersPerTeam && Math.abs((attackersSize + 1) - defendersSize) <= maxTeamDiff;
+        } else {
+            return defendersSize < maxPlayersPerTeam && Math.abs((defendersSize + 1) - attackersSize) <= maxTeamDiff;
+        }
+    }
+
+    private boolean joinTeam(Player player, Team newTeam) {
+        if (player == null || newTeam == null) return false;
+
+        UUID uuid = player.getUniqueId();
+        Team previousTeam = playerTeams.get(uuid);
         if (previousTeam == newTeam) return false;
 
+        // Remove from previous
         if (previousTeam != null) {
-            updateTeamCount(previousTeam, -1);
+            teamMembers.get(previousTeam).remove(uuid);
         }
 
-        if (newTeam == Team.Defenders) {
-            player.sendMessage(plugin.getMsg().getMessage("team-join").get(0).replace("{team}", plugin.getConfigManager().getTeamName(Team.Defenders)));
-        } else if (newTeam == Team.Attackers) {
-            player.sendMessage(plugin.getMsg().getMessage("team-join").get(0).replace("{team}", plugin.getConfigManager().getTeamName(Team.Attackers)));
-        }
+        // Add to new
+        playerTeams.put(uuid, newTeam);
+        teamMembers.get(newTeam).add(uuid);
 
-        playerTeams.put(player.getUniqueId().toString(), newTeam);
+        // Messaging
+        safeTeamJoinMsg(player, newTeam);
 
-        updateTeamCount(newTeam, +1);
-
+        // Side effects (kept as you had)
         plugin.getPlayerKitManager().setDefaultKit(player);
         plugin.getScoreboardManager().updateScoreboard(player, "pre-game");
 
         return true;
     }
 
-    public boolean tryRandomTeamJoin(Player player) {
-
-        // If they're already assigned, don't re-assign
-        if (getTeam(player) != null) {
-            return true;
-        }
-
-        int a = getPlayersInTeam(Team.Attackers);
-        int d = getPlayersInTeam(Team.Defenders);
-
-        // Preferred: smaller team; if equal -> Defenders (so it starts Defenders, then alternates)
-        Team preferred = (d <= a) ? Team.Defenders : Team.Attackers;
-        Team other = (preferred == Team.Defenders) ? Team.Attackers : Team.Defenders;
-
-        // Try preferred first
-        if (canJoin(preferred, a, d)) {
-            return joinTeam(player, preferred);
-        }
-
-        // Fallback to the other team if preferred isn't possible due to cap/balance
-        if (canJoin(other, a, d)) {
-            return joinTeam(player, other);
-        }
-
-        player.sendMessage(plugin.getMsg().getMessage("team-full").get(0));
-        return false;
-    }
-
-    private boolean canJoin(Team team, int a, int d) {
-        if (team == Team.Attackers) {
-            return a < maxPlayersPerTeam && Math.abs((a + 1) - d) <= maxTeamDiff;
-        } else { // Defenders
-            return d < maxPlayersPerTeam && Math.abs((d + 1) - a) <= maxTeamDiff;
-        }
-    }
-
-
-    public Team getTeam(Player player) {
-        return playerTeams.get(player.getUniqueId().toString());
-    }
+    /* ---------------------- Removal / reset ---------------------- */
 
     public void removePlayerFromTeam(Player player) {
-        Team previousTeam = getTeam(player);
-        if (previousTeam != null) {
-            updateTeamCount(previousTeam, -1); // Decrease the count of the old team
-            playerTeams.remove(player.getUniqueId().toString());
+        if (player == null) return;
+
+        UUID uuid = player.getUniqueId();
+        Team prev = playerTeams.remove(uuid);
+        if (prev != null) {
+            teamMembers.get(prev).remove(uuid);
         }
     }
-
-    public Set<Player> getPlayersInTeams(Team team) {
-        return Bukkit.getOnlinePlayers().stream()
-                .filter(player -> getTeam(player) == team)
-                .collect(Collectors.toSet());
-    }
-
-    public int getPlayersInTeam(Team team) {
-        return (team == Team.Attackers) ? attackers : defenders;
-    }
-
 
     public void clearTeams() {
         playerTeams.clear();
-        attackers = 0;
-        defenders = 0;
-    }
-
-    private void updateTeamCount(Team team, int change) {
-        if (team == Team.Attackers) {
-            attackers += change;
-        } else if (team == Team.Defenders) {
-            defenders += change;
+        for (Team t : Team.values()) {
+            teamMembers.get(t).clear();
         }
-
-        if (attackers < 0) attackers = 0;
-        if (defenders < 0) defenders = 0;
     }
 
+    /* ---------------------- Small message helpers ---------------------- */
+
+    private void safeMsg(Player player, String key) {
+        List<String> lines = plugin.getMsg().getMessage(key, player);
+        if (lines == null || lines.isEmpty()) return;
+        player.sendMessage(lines.get(0));
+    }
+
+    private void safeTeamJoinMsg(Player player, Team team) {
+        List<String> lines = plugin.getMsg().getMessage("team-join", player);
+        if (lines == null || lines.isEmpty()) return;
+
+        String msg = lines.get(0);
+        String teamName = plugin.getConfigManager().getTeamName(team);
+        if (teamName == null) teamName = team.name();
+
+        player.sendMessage(msg.replace("{team}", teamName));
+    }
 }

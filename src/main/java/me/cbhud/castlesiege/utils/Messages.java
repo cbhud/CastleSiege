@@ -36,7 +36,7 @@ public class Messages {
         }
 
         return config.getStringList(key).stream()
-                .map(message -> ChatColor.translateAlternateColorCodes('&',message))
+                .map(message -> ChatColor.translateAlternateColorCodes('&', message))
                 .collect(Collectors.toList());
     }
 
@@ -55,7 +55,7 @@ public class Messages {
             return List.of(ChatColor.RED + "Message not found: " + key);
         }
         return config.getStringList(key).stream()
-                .map(message -> ChatColor.translateAlternateColorCodes('&',message))
+                .map(message -> ChatColor.translateAlternateColorCodes('&', message))
                 .collect(Collectors.toList());
     }
 
@@ -66,16 +66,4 @@ public class Messages {
         return message;
     }
 
-    public String getItemMessage(String path) {
-        return config.getString(path, "");
-    }
-
-    // Gets a list of strings (lore lines) for the given path, returns empty list if missing
-    public List<String> getItemMessages(String path) {
-        return config.getStringList(path);
-    }
-
-    public void reloadConfig() {
-        config = YamlConfiguration.loadConfiguration(configFile);
-    }
 }

@@ -3,110 +3,166 @@ package me.cbhud.castlesiege.arena;
 import io.github.regenerato.worldedit.NoSchematicException;
 import io.github.regenerato.worldedit.SchematicProcessor;
 import me.cbhud.castlesiege.CastleSiege;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ArenaResetManager {
 
     private final CastleSiege plugin;
 
+    private final File arenasFile;
+    private FileConfiguration arenasConfig;
+
+    // Prevent overlapping resets for the same arena
+    private final Set<String> resettingArenas = ConcurrentHashMap.newKeySet();
+
     public ArenaResetManager(CastleSiege plugin) {
         this.plugin = plugin;
+        this.arenasFile = new File(plugin.getDataFolder(), "arenas.yml");
+        this.arenasConfig = YamlConfiguration.loadConfiguration(arenasFile);
+    }
+
+    /** Call this if arenas.yml is edited while the server is running. */
+    public void reload() {
+        this.arenasConfig = YamlConfiguration.loadConfiguration(arenasFile);
     }
 
     /**
      * Resets the given arena using the schematic and config bounds.
      */
     public void resetArena(Arena arena) {
+        if (arena == null) return;
+
+        // Prevent double reset scheduling
+        if (!resettingArenas.add(arena.getId())) {
+            plugin.getLogger().warning("[CastleSiege] Reset already in progress for arena " + arena.getId());
+            return;
+        }
+
         try {
-            File schematicFolder = new File(plugin.getDataFolder(), "schematics");
-            SchematicProcessor processor = SchematicProcessor.newSchematicProcessor(plugin.getWorldEdit(), arena.getId(), schematicFolder);
             World world = arena.getWorld();
             if (world == null) {
-                Bukkit.getLogger().severe("[CastleSiege] World " + arena.getWorldName() + " for arena " + arena.getId() + " is not loaded!");
+                plugin.getLogger().severe("[CastleSiege] World " + arena.getWorldName()
+                        + " for arena " + arena.getId() + " is not loaded!");
                 return;
             }
 
-            File configFile = new File(plugin.getDataFolder(), "arenas.yml");
-            FileConfiguration config = YamlConfiguration.loadConfiguration(configFile);
             String arenaPath = "arenas." + arena.getId();
 
-            if (!config.contains(arenaPath + ".minX")) {
-                Bukkit.getLogger().warning("[CastleSiege] Arena location is missing for " + arena.getId());
+            if (!arenasConfig.contains(arenaPath + ".minX")) {
+                plugin.getLogger().warning("[CastleSiege] Arena bounds missing for " + arena.getId());
                 return;
             }
 
-            int minX = config.getInt(arenaPath + ".minX");
-            int maxX = config.getInt(arenaPath + ".maxX");
-            int minY = config.getInt(arenaPath + ".minY");
-            int maxY = config.getInt(arenaPath + ".maxY");
-            int minZ = config.getInt(arenaPath + ".minZ");
-            int maxZ = config.getInt(arenaPath + ".maxZ");
+            int minX = arenasConfig.getInt(arenaPath + ".minX");
+            int maxX = arenasConfig.getInt(arenaPath + ".maxX");
+            int minY = arenasConfig.getInt(arenaPath + ".minY");
+            int maxY = arenasConfig.getInt(arenaPath + ".maxY");
+            int minZ = arenasConfig.getInt(arenaPath + ".minZ");
+            int maxZ = arenasConfig.getInt(arenaPath + ".maxZ");
 
-            int pasteX = config.getInt(arenaPath + ".pasteX");
-            int pasteY = config.getInt(arenaPath + ".pasteY");
-            int pasteZ = config.getInt(arenaPath + ".pasteZ");
+            int pasteX = arenasConfig.getInt(arenaPath + ".pasteX");
+            int pasteY = arenasConfig.getInt(arenaPath + ".pasteY");
+            int pasteZ = arenasConfig.getInt(arenaPath + ".pasteZ");
 
-            // First clear, then paste schematic
-            clearArena(world, minX, maxX, minY, maxY, minZ, maxZ, () -> {
+            // Normalize bounds if misconfigured
+            int nMinX = Math.min(minX, maxX), nMaxX = Math.max(minX, maxX);
+            int nMinY = Math.min(minY, maxY), nMaxY = Math.max(minY, maxY);
+            int nMinZ = Math.min(minZ, maxZ), nMaxZ = Math.max(minZ, maxZ);
+
+            File schematicFolder = new File(plugin.getDataFolder(), "schematics");
+            SchematicProcessor processor = SchematicProcessor.newSchematicProcessor(
+                    plugin.getWorldEdit(),
+                    arena.getId(),
+                    schematicFolder
+            );
+
+            // Clear first, then paste schematic
+            clearArena(world, nMinX, nMaxX, nMinY, nMaxY, nMinZ, nMaxZ, () -> {
                 try {
-                    Location pasteLocation = new Location(world, pasteX, pasteY, pasteZ);
-                    processor.paste(pasteLocation);
+                    processor.paste(new Location(world, pasteX, pasteY, pasteZ));
+                    plugin.getLogger().info("[CastleSiege] Arena " + arena.getId() + " reset successfully!");
+                    arena.setState(ArenaState.WAITING);
                 } catch (NoSchematicException e) {
-                    throw new RuntimeException(e);
+                    plugin.getLogger().severe("[CastleSiege] Missing schematic for arena " + arena.getId()
+                            + ". Cannot paste reset.");
+                } finally {
+                    resettingArenas.remove(arena.getId());
                 }
-                Bukkit.getLogger().info("Arena " + arena.getId() + " reset successfully!");
-                arena.setState(ArenaState.WAITING);
             });
 
         } catch (Exception e) {
-            Bukkit.getLogger().severe("[CastleSiege] Error resetting arena " + arena.getId());
+            plugin.getLogger().severe("[CastleSiege] Error resetting arena " + arena.getId());
             e.printStackTrace();
+            resettingArenas.remove(arena.getId());
         }
     }
 
     /**
-     * Clears a region block by block, with batching.
+     * Clears a region block-by-block with batching, without allocating a huge block list.
      */
-    private void clearArena(World world, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, Runnable onComplete) {
-        int batchSize = plugin.getConfigManager().getConfig().getInt("arenaBlockRegenPerSecond", 2500);
-        List<Block> blocks = new ArrayList<>();
-
-        for (int x = minX; x <= maxX; x++) {
-            for (int z = minZ; z <= maxZ; z++) {
-                for (int y = minY; y <= maxY; y++) {
-                    blocks.add(world.getBlockAt(x, y, z));
-                }
-            }
-        }
+    private void clearArena(
+            World world,
+            int minX, int maxX,
+            int minY, int maxY,
+            int minZ, int maxZ,
+            Runnable onComplete
+    ) {
+        // Config key is named "...PerSecond", so interpret it as per second and convert to per tick.
+        int perSecond = plugin.getConfigManager().getConfig().getInt("arenaBlockRegenPerSecond", 2500);
+        int perTick = Math.max(1, (int) Math.ceil(perSecond / 20.0));
 
         new BukkitRunnable() {
-            int index = 0;
+            int x = minX;
+            int y = minY;
+            int z = minZ;
+
+            boolean done = false;
 
             @Override
             public void run() {
                 int processed = 0;
-                while (index < blocks.size() && processed < batchSize) {
-                    Block block = blocks.get(index++);
-                    block.setType(Material.AIR, false);
+
+                while (!done && processed < perTick) {
+                    Block block = world.getBlockAt(x, y, z);
+                    if (block.getType() != Material.AIR) {
+                        block.setType(Material.AIR, false);
+                    }
+
                     processed++;
+
+                    // advance coordinates in y -> z -> x order
+                    y++;
+                    if (y > maxY) {
+                        y = minY;
+                        z++;
+                        if (z > maxZ) {
+                            z = minZ;
+                            x++;
+                            if (x > maxX) {
+                                done = true;
+                            }
+                        }
+                    }
                 }
 
-                if (index >= blocks.size()) {
+                if (done) {
                     cancel();
                     if (onComplete != null) {
-                        Bukkit.getScheduler().runTask(plugin, onComplete);
+                        onComplete.run(); // already on main thread
                     }
                 }
             }
         }.runTaskTimer(plugin, 1L, 1L);
     }
 }
-

@@ -1,38 +1,14 @@
 name: CastleSiege
-version: '2.0.7'
+version: '2.0.8'
 main: me.cbhud.castlesiege.CastleSiege
 author: cbhud
 api-version: '1.20'
-depend: [WorldEdit, Regenerato]
+depend: [Regenerato]
 softdepend:
   - PlaceholderAPI
   - FastAsyncWorldEdit
   - Multiverse-Core
 commands:
-  setlobby:
-    description: Set the Main lobby location.
-    permission: cs.admin
-  leave:
-    description: Leave arena.
-  coins:
+  cse:
     description: Main command for Castle Siege plugin.
-    usage: /coins <add | remove> <player> <amount>
-    aliases: []
-    permission: cs.admin
-  arena:
-    description: Main command for Castle Siege plugin.
-    usage: /arena <create/setlobby/setking/setdefenders/setattackers/finish>
-    aliases: []
-    permission: cs.admin
-  stats:
-    description: View player statistics
-    usage: /stats [player]
-    aliases: [ statistics, playerstats ]
-  join:
-    description: Join a specific Castle Siege arena
-    usage: /<command> <arenaName>
-    aliases: []
-  randomjoin:
-    description: Join a random Castle Siege arena
-    usage: /<command>
-    aliases: []
+    usage: /cse <join|randomjoin|leave|stats|arena|coins|setlobby>

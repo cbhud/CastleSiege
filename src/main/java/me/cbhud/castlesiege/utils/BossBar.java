@@ -1,7 +1,6 @@
 package me.cbhud.castlesiege.utils;
 
 import me.cbhud.castlesiege.CastleSiege;
-import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.bossbar.BossBar.Color;
 import net.kyori.adventure.bossbar.BossBar.Overlay;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
@@ -16,14 +15,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class BBar {
+public class BossBar {
 
     private BukkitAudiences adventure;
     private final CastleSiege plugin;
     private boolean enabled;
 
     // Store individual boss bars and tasks for each player
-    private final Map<UUID, BossBar> playerBossBars = new HashMap<>();
+    private final Map<UUID, net.kyori.adventure.bossbar.BossBar> playerBossBars = new HashMap<>();
     private final Map<UUID, BukkitTask> playerTasks = new HashMap<>();
 
     public BukkitAudiences adventure() {
@@ -33,7 +32,7 @@ public class BBar {
         return this.adventure;
     }
 
-    public BBar(CastleSiege plugin) {
+    public BossBar(CastleSiege plugin) {
         this.plugin = plugin;
         this.adventure = BukkitAudiences.create(plugin);
     }
@@ -42,7 +41,7 @@ public class BBar {
         UUID playerId = player.getUniqueId();
 
         // Hide and remove the boss bar for this specific player
-        BossBar bar = playerBossBars.get(playerId);
+        net.kyori.adventure.bossbar.BossBar bar = playerBossBars.get(playerId);
         if (bar != null) {
             this.adventure().player(player).hideBossBar(bar);
             playerBossBars.remove(playerId);
@@ -88,7 +87,7 @@ public class BBar {
         Component title = Component.text(ChatColor.GOLD + zombie.getCustomName());
 
         // Create a new boss bar for this specific player
-        BossBar bar = BossBar.bossBar(
+        net.kyori.adventure.bossbar.BossBar bar = net.kyori.adventure.bossbar.BossBar.bossBar(
                 title,
                 (float) (zombie.getHealth() / zombie.getMaxHealth()),
                 Color.PURPLE,

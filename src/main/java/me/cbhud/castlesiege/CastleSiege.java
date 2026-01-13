@@ -1,12 +1,11 @@
 package me.cbhud.castlesiege;
 
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
-import io.github.regenerato.Regenerato;
 import me.cbhud.castlesiege.arena.ArenaManager;
 import me.cbhud.castlesiege.arena.ArenaResetManager;
-import me.cbhud.castlesiege.arena.ArenaTimerManager;
-import me.cbhud.castlesiege.cmd.*;
+import me.cbhud.castlesiege.cmd.CseCommand;
 import me.cbhud.castlesiege.event.*;
+import me.cbhud.castlesiege.gui.ArenaEditChatListener;
 import me.cbhud.castlesiege.gui.ArenaSelector;
 import me.cbhud.castlesiege.gui.KitSelector;
 import me.cbhud.castlesiege.gui.TeamSelector;
@@ -24,7 +23,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class CastleSiege extends JavaPlugin {
 
     Messages msg;
-    SetLobbyCommand slc;
     ConfigManager configManager;
     TeamManager teamManager;
     ScoreboardManager scoreboardManager;
@@ -36,6 +34,7 @@ public final class CastleSiege extends JavaPlugin {
 
     ArenaSelector arenaSelector;
     TeamSelector teamSelector;
+    private ArenaEditChatListener arenaEditChatListener;
 
     PlayerManager playerManager;
     WorldEditPlugin worldEdit;
@@ -45,7 +44,7 @@ public final class CastleSiege extends JavaPlugin {
     ItemManager itemManager;
     DataManager dataManager;
     KillEffectManager killEffectManager;
-    BBar bossBar;
+    BossBar bossBar;
 
     @Override
     public void onEnable() {
@@ -63,19 +62,13 @@ public final class CastleSiege extends JavaPlugin {
             Bukkit.getPluginManager().disablePlugin(this);
             return;
         }
-        getCommand("arena").setExecutor(new CreateArenaCommand(this, arenaManager));
         arenaSelector = new ArenaSelector(this);
         teamSelector = new TeamSelector(this);
-
-        getCommand("leave").setExecutor(new LeaveArenaCommand(this));
-        getCommand("setlobby").setExecutor(slc = new SetLobbyCommand(this));
-        getCommand("stats").setExecutor(new StatsCommand(this));
 
         getServer().getPluginManager().registerEvents(new JoinEvent(this), this);
         getServer().getPluginManager().registerEvents(new DeathEvent(this), this);
         getServer().getPluginManager().registerEvents(new RightClickEffects(this), this);
         getServer().getPluginManager().registerEvents(new DamageEvent(this), this);
-        Bukkit.getPluginManager().registerEvents(new SnowballHitEvent(this), this);
         teamManager = new TeamManager(this, this.getConfig());
         mobManager = new MobManager(this);
 
@@ -83,6 +76,10 @@ public final class CastleSiege extends JavaPlugin {
         playerManager = new PlayerManager(this);
         getServer().getPluginManager().registerEvents(new MiscEvents(this), this);
 
+        CseCommand cse = new CseCommand(this);
+
+        getCommand("cse").setExecutor(cse);
+        getCommand("cse").setTabCompleter(cse);
 
         itemManager = new ItemManager(this);
         dataManager = new DataManager(this);
@@ -90,14 +87,12 @@ public final class CastleSiege extends JavaPlugin {
         playerKitManager = new PlayerKitManager(this);
         kitSelector = new KitSelector(this);
         killEffectManager = new KillEffectManager(this);
-        getCommand("coins").setExecutor(new CoinsCommand(this));
         getServer().getPluginManager().registerEvents(new TNTThrower(this), this);
-        bossBar = new BBar(this);
+        bossBar = new BossBar(this);
         bossBar.setIsEnabled( getConfigManager().getBossBarEnabled());
 
-        JoinArenaCommand joinArenaCommand = new JoinArenaCommand(this);
-        this.getCommand("join").setExecutor(joinArenaCommand);
-        this.getCommand("randomjoin").setExecutor(joinArenaCommand);
+        this.arenaEditChatListener = new ArenaEditChatListener(this);
+        Bukkit.getPluginManager().registerEvents(arenaEditChatListener, this);
     }
 
     @Override
@@ -119,10 +114,6 @@ public final class CastleSiege extends JavaPlugin {
 
     public Messages getMsg(){
         return msg;
-    }
-
-    public SetLobbyCommand getSlc() {
-        return slc;
     }
 
     public ConfigManager getConfigManager(){
@@ -172,7 +163,11 @@ public final class CastleSiege extends JavaPlugin {
         return dataManager;
     }
 
-    public BBar getBBar() {
+    public BossBar getBBar() {
         return bossBar;
     }
+
+    public ArenaEditChatListener getArenaEditChatListener() { return arenaEditChatListener; }
+
+
 }

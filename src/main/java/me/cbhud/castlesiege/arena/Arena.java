@@ -1,197 +1,289 @@
 package me.cbhud.castlesiege.arena;
 
-import org.bukkit.Bukkit;
 import me.cbhud.castlesiege.CastleSiege;
 import me.cbhud.castlesiege.team.Team;
 import me.cbhud.castlesiege.team.TeamManager;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Sound;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 public class Arena {
+
+    private final CastleSiege plugin;
     private final String id;
+
     private Location lobbySpawn;
     private Location kingSpawn;
     private Location attackersSpawn;
     private Location defendersSpawn;
+
     private final int maxPlayers;
     private final int minPlayers;
-    private final Set<Player> players;
-    private final CastleSiege plugin;
-    private ArenaState state;
-    private TeamManager teamManager;
-    private int winner;
-    String worldName;
-    private ArenaTimerManager timerManager;
-    private boolean hardcore;
 
-    public Arena(CastleSiege plugin, String id, Location lobbySpawn, Location kingSpawn, Location attackersSpawn, Location defendersSpawn, int max, int min, int autoStart, int countdown, String worldName, boolean hardcore) {
+    // ✅ store UUIDs, not Player objects
+    private final Set<UUID> playerIds = new HashSet<>();
+
+    private ArenaState state = ArenaState.WAITING;
+    private final TeamManager teamManager;
+
+    private int winner = -1;
+
+    private final String worldName;
+    private final ArenaTimerManager timerManager;
+    private final boolean hardcore;
+
+    public Arena(
+            CastleSiege plugin,
+            String id,
+            Location lobbySpawn,
+            Location kingSpawn,
+            Location attackersSpawn,
+            Location defendersSpawn,
+            int max,
+            int min,
+            int autoStart,
+            int countdown,
+            String worldName,
+            boolean hardcore
+    ) {
         this.plugin = plugin;
         this.id = id;
+
         this.lobbySpawn = lobbySpawn;
         this.kingSpawn = kingSpawn;
         this.attackersSpawn = attackersSpawn;
         this.defendersSpawn = defendersSpawn;
+
         this.maxPlayers = max;
         this.minPlayers = min;
+
         this.timerManager = new ArenaTimerManager(plugin, this, countdown, autoStart);
-        this.players = new HashSet<>();
-        this.state = ArenaState.WAITING;
         this.teamManager = new TeamManager(plugin, plugin.getConfigManager().getConfig());
+
         this.worldName = worldName;
-        this.winner = -1;
         this.hardcore = hardcore;
     }
 
-    public ArenaTimerManager getTimerManager() {
-        return timerManager;
+    /* ------------------------- Basics ------------------------- */
+
+    public String getId() { return id; }
+    public ArenaState getState() { return state; }
+    public void setState(ArenaState state) { this.state = state; }
+
+    public int getMax() { return maxPlayers; }
+    public int getMin() { return minPlayers; }
+    public int getNoPlayers() { return playerIds.size(); }
+
+    public boolean isHardcore() { return hardcore; }
+    public int getWinner() { return winner; }
+
+    public ArenaTimerManager getTimerManager() { return timerManager; }
+    public TeamManager getTeamManager() { return teamManager; }
+
+    public String getWorldName() { return worldName; }
+    public World getWorld() { return Bukkit.getWorld(worldName); }
+
+    /** Raw UUID set (unmodifiable). Useful for managers. */
+    public Set<UUID> getPlayerIds() {
+        return Collections.unmodifiableSet(playerIds);
     }
 
-    public Location getAttackersSpawn() {
-        return attackersSpawn;
+    /** Online players snapshot for safe iteration. */
+    public List<Player> getOnlinePlayersSnapshot() {
+        List<Player> list = new ArrayList<>(playerIds.size());
+        for (UUID uuid : playerIds) {
+            Player p = Bukkit.getPlayer(uuid);
+            if (p != null && p.isOnline()) list.add(p);
+        }
+        return list;
     }
 
-    public Location getDefendersSpawn() {
-        return defendersSpawn;
+    public boolean containsPlayer(Player player) {
+        return player != null && playerIds.contains(player.getUniqueId());
     }
 
-    public int getNoPlayers() {
-        return players.size();
+    public boolean containsPlayer(UUID uuid) {
+        return uuid != null && playerIds.contains(uuid);
     }
 
-    public int getMax() {
-        return maxPlayers;
+    /* ------------------------- Spawns ------------------------- */
+
+    public Location getAttackersSpawn() { return attackersSpawn; }
+    public Location getDefendersSpawn() { return defendersSpawn; }
+    public Location getTeamSpawn(Team team) { return (team == Team.Attackers) ? attackersSpawn : defendersSpawn; }
+
+    public Location getLSpawn() { return lobbySpawn; } // kept for compatibility
+    public Location getKingSpawn() { return kingSpawn; }
+
+    public Location getKSpawn() {
+        Location loc = plugin.getArenaManager().getMobLocation(this);
+        if (loc != null) kingSpawn = loc;
+        return kingSpawn;
     }
 
-    public int getMin() {
-        return minPlayers;
+    public Location getLobbySpawn() {
+        Location loc = plugin.getArenaManager().getLocation(this);
+        if (loc != null) lobbySpawn = loc;
+        return lobbySpawn;
     }
 
-    public Set<Player> getPlayers() {
-        return players;
+    private Location resolveKingSpawn() {
+        if (kingSpawn == null) kingSpawn = getKSpawn();
+        return kingSpawn;
     }
 
-    public String getId() {
-        return id;
+    private Location resolveLobbySpawn() {
+        if (lobbySpawn == null) lobbySpawn = getLobbySpawn();
+        return lobbySpawn;
     }
 
-    public ArenaState getState() {
-        return state;
+    /* ------------------------- Team helpers ------------------------- */
+
+    public int getAttackersSize() { return teamManager.getPlayersInTeam(Team.Attackers); }
+    public int getDefendersSize() { return teamManager.getPlayersInTeam(Team.Defenders); }
+
+    public Team getTeam(Player player) {
+        return teamManager.getTeam(player);
     }
+
+    public boolean joinTeam(Player p, Team t) {
+        return teamManager.tryToJoinTeam(p, t);
+    }
+
+    /* ------------------------- Join / Leave ------------------------- */
 
     public boolean addPlayer(Player player) {
-        if (state == ArenaState.ENDED){
-            for (String i:  plugin.getMsg().getMessage("arenaEnded", player)){
-                player.sendMessage(i);
-            }
+        if (player == null) return false;
+
+        if (state == ArenaState.ENDED) {
+            sendLines(player, "arenaEnded");
             return false;
         }
 
-        if (players.size() >= getMax()) {
-            for (String i:  plugin.getMsg().getMessage("arenaFull", player)){
-                player.sendMessage(i);
-            }
+        if (playerIds.size() >= maxPlayers) {
+            sendLines(player, "arenaFull");
             return false;
         }
 
-        if(state == ArenaState.IN_GAME) {
-            player.sendTitle(plugin.getMsg().getMessage("spectatorTitle", player).get(0), plugin.getMsg().getMessage("spectatorTitle", player).get(1), 10, 70, 20);
-            player.teleport(getKingSpawn());
-            players.add(player);
+        UUID uuid = player.getUniqueId();
+
+        // In-game join = spectator
+        if (state == ArenaState.IN_GAME) {
+            playerIds.add(uuid);
             plugin.getPlayerManager().setPlayerAsSpectating(player);
+
+            Location ks = resolveKingSpawn();
+            if (ks != null) player.teleport(ks);
+
+            sendTitleSafe(player, "spectatorTitle", 10, 70, 20);
             return false;
         }
 
-        for (String i:  plugin.getMsg().getMessage("arenaJoin", player)){
-            player.sendMessage(i);
-        }
+        sendLines(player, "arenaJoin");
 
-        if(!teamManager.tryRandomTeamJoin(player)){
-            player.teleport(getKingSpawn());
-            player.sendTitle(plugin.getMsg().getMessage("spectatorTitle", player).get(0), plugin.getMsg().getMessage("spectatorTitle", player).get(1), 10, 70, 20);
-            players.add(player);
+        // Try team join; if fail -> spectator
+        if (!teamManager.tryRandomTeamJoin(player)) {
+            playerIds.add(uuid);
             plugin.getPlayerManager().setPlayerAsSpectating(player);
+
+            Location ks = resolveKingSpawn();
+            if (ks != null) player.teleport(ks);
+
+            sendTitleSafe(player, "spectatorTitle", 10, 70, 20);
             return false;
         }
 
-        players.add(player);
+        // Normal waiting join
+        playerIds.add(uuid);
 
-        if (lobbySpawn != null){
-            player.teleport(getLobbySpawn());
-        }
+        Location ls = resolveLobbySpawn();
+        if (ls != null) player.teleport(ls);
 
-        if (players.size() >= getMin()) {
+        plugin.getPlayerManager().setPlayerAsWaiting(player);
+
+        if (playerIds.size() >= minPlayers) {
             timerManager.startAutoStart();
         }
-        plugin.getPlayerManager().setPlayerAsWaiting(player);
 
         return true;
     }
 
     public void removePlayer(Player player) {
-        players.remove(player);
+        if (player == null) return;
+
+        playerIds.remove(player.getUniqueId());
         teamManager.removePlayerFromTeam(player);
-        plugin.getScoreboardManager().updateScoreboard(player, "lobby");
-        if (players.size() < minPlayers && state == ArenaState.WAITING && timerManager.getAutoStartTaskId() != -1) {
+
+        if (state == ArenaState.WAITING && playerIds.size() < minPlayers && timerManager.getAutoStartTaskId() != -1) {
             timerManager.stopAutoStart();
         }
-        if (player != null) {
+
+        if (player.isOnline()) {
             plugin.getPlayerManager().setPlayerAsLobby(player);
         }
-        plugin.getArenaManager().playerArenaMap.remove(player.getUniqueId());
+
+        // ✅ Integration: never touch internal map directly
+        plugin.getArenaManager().unmapPlayer(player.getUniqueId());
     }
 
+    /** Hardcore: remove them from team only (kept compatible with your current DeathEvent). */
     public void removeHardcore(Player player) {
+        if (player == null) return;
         teamManager.removePlayerFromTeam(player);
     }
 
+    /* ------------------------- Game flow ------------------------- */
+
     public void startGame() {
-        if (state != ArenaState.WAITING) {
-            Bukkit.broadcastMessage("You cannot start game in this state!");
-        }
+        if (state != ArenaState.WAITING) return;
+
         state = ArenaState.IN_GAME;
-        if (getKingSpawn() == null){
-            getKSpawn();
+
+        World world = getWorld();
+        if (world != null) world.setTime(14000);
+
+        Location ks = resolveKingSpawn();
+        if (ks != null) {
+            plugin.getMobManager().spawnCustomMob(ks);
         }
-        Bukkit.getWorld(worldName).setTime(14000);
-        plugin.getMobManager().spawnCustomMob(getKSpawn());
-        players.forEach(player -> {
-            if (plugin.getBBar().isEnabled()) {
-            plugin.getBBar().showZombieHealthBarToPlayer(plugin.getMobManager().getKingZombie(getKSpawn().getWorld()), player);
-            }
-            plugin.getMsg().getMessage("game-start-msg", player).forEach(player::sendMessage);
-            if (isHardcore()){
-            plugin.getMsg().getMessage("game-start-hardcore-msg-addition", player).forEach(player::sendMessage);
-            }
-        });
+
         teleportTeamsToSpawns();
+
+        for (Player p : getOnlinePlayersSnapshot()) {
+            sendLines(p, "game-start-msg");
+            if (hardcore) sendLines(p, "game-start-hardcore-msg-addition");
+        }
+
         timerManager.startCountdown();
     }
 
     public double getKingZombieHealth() {
-        if (plugin.getMobManager().getKingZombie(kingSpawn.getWorld()) != null) {
-            return plugin.getMobManager().getZombieHealth(plugin.getMobManager().getKingZombie(kingSpawn.getWorld()));
-        } else {
-            return 0.0;
+        Location ks = resolveKingSpawn();
+        if (ks == null || ks.getWorld() == null) return 0.0;
+
+        if (plugin.getMobManager().getKingZombie(ks.getWorld()) != null) {
+            return plugin.getMobManager().getZombieHealth(plugin.getMobManager().getKingZombie(ks.getWorld()));
         }
+        return 0.0;
     }
 
     public void endGame() {
+        if (state == ArenaState.ENDED) return;
+
         state = ArenaState.ENDED;
 
-        // Determine winner and set up game-specific logic
-        boolean attackersWon = timerManager.getCountdownTaskId() != -1;
-        Team winningTeam;
-        Sound winSound;
-        String winMessageKey;
-        String winTitleKey;
+        // Use the new timer flag if you applied the TimerManager changes
+        boolean attackersWon = !timerManager.didCountdownExpire();
+        if (teamManager.getPlayersInTeam(Team.Attackers) == 0) attackersWon = false;
 
-        if (teamManager.getPlayersInTeam(Team.Attackers) == 0){
-            attackersWon = false;
-        }
-
+        final Team winningTeam;
+        final Sound winSound;
+        final String winMessageKey;
+        final String winTitleKey;
 
         if (attackersWon) {
             winner = 1;
@@ -206,200 +298,117 @@ public class Arena {
             winSound = Sound.UI_TOAST_CHALLENGE_COMPLETE;
             winMessageKey = "defenders-win-msg";
             winTitleKey = "defendersWinTitle";
+
             plugin.getMobManager().removeCustomZombie(this);
 
-            World world = Bukkit.getWorld(worldName);
-            if (world != null) {
-                world.setTime(1000);
-            }
+            World world = getWorld();
+            if (world != null) world.setTime(1000);
         }
 
-        // Process all players once
-        players.forEach(player -> {
-            if (player == null || !player.isOnline()) return;
-
+        for (Player p : getOnlinePlayersSnapshot()) {
             if (plugin.getBBar().isEnabled()) {
-                plugin.getBBar().removeBarForPlayer(player);
+                plugin.getBBar().removeBarForPlayer(p);
             }
 
-            // Play sound and update scoreboard for all players
-            player.playSound(player.getLocation(), winSound, 1.0f, 1.0f);
-            plugin.getScoreboardManager().updateScoreboard(player, "end");
+            p.playSound(p.getLocation(), winSound, 1.0f, 1.0f);
+            plugin.getScoreboardManager().updateScoreboard(p, "end");
 
-            // Send win messages
-            List<String> winMessages = plugin.getMsg().getMessage(winMessageKey, player);
-            if (winMessages != null) {
-                winMessages.forEach(player::sendMessage);
-            }
-
-            // Send title
-            List<String> titleMessages = plugin.getMsg().getMessage(winTitleKey, player);
-            if (titleMessages != null && titleMessages.size() >= 2) {
-                player.sendTitle(titleMessages.get(0), titleMessages.get(1), 10, 70, 20);
-            }
-        });
-
-        // Award coins and wins to winning team
-        Set<Player> winningPlayers = teamManager.getPlayersInTeams(winningTeam);
-        if (winningPlayers != null) {
-            int coinsReward = plugin.getConfigManager().getCoinsOnWin();
-            winningPlayers.forEach(player -> {
-                if (player != null) {
-                    plugin.getDataManager().addPlayerCoins(player.getUniqueId(), coinsReward);
-                    plugin.getDataManager().incrementWins(player.getUniqueId(), 1);
-                }
-            });
+            sendLines(p, winMessageKey);
+            sendTitleSafe(p, winTitleKey, 10, 70, 20);
         }
 
-        // Schedule lobby teleportation
+        // Rewards using UUIDs (works even if winners disconnected)
+        int coinsReward = plugin.getConfigManager().getCoinsOnWin();
+        for (UUID uuid : teamManager.getTeamMemberIds(winningTeam)) {
+            plugin.getDataManager().addPlayerCoins(uuid, coinsReward);
+            plugin.getDataManager().incrementWins(uuid, 1);
+        }
+
+        // Cleanup players via ArenaManager (single source of truth)
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            // Create a copy to avoid concurrent modification
-            List<Player> playersToTeleport = new ArrayList<>(players);
-
-            playersToTeleport.forEach(player -> {
-                if (player != null && player.isOnline()) {
-                    Location lobby = plugin.getSlc().getLobby();
-                    if (lobby != null) {
-                        player.teleport(lobby);
-                    }
-                    plugin.getArenaManager().removePlayerFromArena(player);
-                    plugin.getScoreboardManager().updateScoreboard(player, "lobby");
-                    plugin.getPlayerManager().setPlayerAsLobby(player);
+            for (UUID uuid : new HashSet<>(playerIds)) {
+                Player p = Bukkit.getPlayer(uuid);
+                if (p != null) {
+                    plugin.getArenaManager().removePlayerFromArena(p);
+                } else {
+                    // offline: just unmap + drop from this arena
+                    plugin.getArenaManager().unmapPlayer(uuid);
+                    playerIds.remove(uuid);
                 }
-            });
+            }
 
-            // Clear collections
-            players.clear();
+            playerIds.clear();
             teamManager.clearTeams();
-
         }, 15 * 20L);
 
-        // Schedule arena reset
-        Bukkit.getScheduler().runTaskLater(plugin, () ->
-                        plugin.getArenaResetManager().resetArena(this),
+        Bukkit.getScheduler().runTaskLater(plugin,
+                () -> plugin.getArenaResetManager().resetArena(this),
                 25 * 20L
         );
     }
 
-    public Location getLSpawn() {
-        return lobbySpawn;
-    }
-
-    public Location getKingSpawn(){
-        return kingSpawn;
-    }
-    public Location getKSpawn() {
-        kingSpawn = plugin.getArenaManager().getMobLocation(this);
-        return kingSpawn;
-    }
-
-    public Location getLobbySpawn() {
-        lobbySpawn = plugin.getArenaManager().getLocation(this);
-        return lobbySpawn;
-    }
-
-    public int getAttackersSize() {
-        return teamManager.getPlayersInTeam(Team.Attackers);
-    }
-
-    public int getDefendersSize() {
-        return teamManager.getPlayersInTeam(Team.Defenders);
-    }
-
-    public Team getTeam(Player player) {
-        return teamManager.getTeam(player);
-    }
-
-    public boolean joinTeam(Player p, Team t) {
-        teamManager.tryToJoinTeam(p, t);
-        return true;
-    }
+    /* ------------------------- Teleport teams ------------------------- */
 
     public void teleportTeamsToSpawns() {
-        CompletableFuture.runAsync(() -> {
-            for (Team team : Team.values()) {
-                Location teamSpawn = getSpawnLocationForTeam(team);
-                if (teamSpawn == null) continue;
+        // Main-thread only
+        for (Team team : Team.values()) {
+            Location spawn = (team == Team.Attackers) ? attackersSpawn : defendersSpawn;
+            if (spawn == null) continue;
 
-                Set<Player> teamPlayers = teamManager.getPlayersInTeams(team);
-                if (teamPlayers.isEmpty()) continue;
+            Set<Player> teamPlayers = teamManager.getPlayersInTeams(team);
+            if (teamPlayers == null || teamPlayers.isEmpty()) continue;
 
-                Bukkit.getScheduler().runTask(plugin, () -> teamPlayers.forEach(player -> {
-                    plugin.getPlayerManager().setPlayerAsPlaying(player);
-                    player.teleport(teamSpawn);
-                    if (!plugin.getPlayerKitManager().hasSelectedKit(player)){
-                        plugin.getPlayerKitManager().setDefaultKit(player);
+            for (Player p : teamPlayers) {
+                if (p == null || !p.isOnline()) continue;
+
+                plugin.getPlayerManager().setPlayerAsPlaying(p);
+                p.teleport(spawn);
+
+                if (!plugin.getPlayerKitManager().hasSelectedKit(p)) {
+                    plugin.getPlayerKitManager().setDefaultKit(p);
+                }
+                plugin.getPlayerKitManager().giveKit(p, plugin.getPlayerKitManager().getSelectedKit(p));
+
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    if (team == Team.Defenders) {
+                        sendTitleSafe(p, "defendersTitle", 10, 100, 20);
+                    } else {
+                        sendTitleSafe(p, "attackersTitle", 10, 100, 20);
                     }
-                    plugin.getPlayerKitManager().giveKit(player, plugin.getPlayerKitManager().getSelectedKit(player));
-                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                        if (team == Team.Defenders) {
-                            player.sendTitle(plugin.getMsg().getMessage("defendersTitle", player).get(0),
-                                    plugin.getMsg().getMessage("defendersTitle", player).get(1), 10, 70, 20);
-                        } else {
-                            player.sendTitle(plugin.getMsg().getMessage("attackersTitle", player).get(0),
-                                    plugin.getMsg().getMessage("attackersTitle", player).get(1), 10, 70, 20);
-                        }
-                        player.playSound(player.getLocation(),
-                                Sound.ENTITY_WITHER_SPAWN,
-                                1.0f, // volume
-                                1.0f  // pitch
-                        );
-                    }, 20L);
-
-                }));
+                    if (plugin.getBBar().isEnabled()) {
+                        plugin.getBBar().showZombieHealthBarToPlayer(
+                                plugin.getMobManager().getKingZombie(kingSpawn.getWorld()), p);
+                    }
+                    p.playSound(p.getLocation(), Sound.ENTITY_WITHER_SPAWN, 1.0f, 1.0f);
+                }, 20L);
             }
-        });
-    }
-
-    private Location getSpawnLocationForTeam(Team team) {
-        if (team == Team.Attackers) {
-            return getAttackersSpawn();
-        } else {
-            return getDefendersSpawn();
         }
     }
 
-    public int getWinner() {
-        return winner;
+    /* ------------------------- Message helpers ------------------------- */
+
+    private void sendLines(Player player, String key) {
+        List<String> lines = plugin.getMsg().getMessage(key, player);
+        if (lines == null || lines.isEmpty()) return;
+        for (String s : lines) {
+            if (s != null && !s.isEmpty()) player.sendMessage(s);
+        }
     }
 
-    public Location getTeamSpawn(Team team) {
-        if (team == Team.Attackers) {return attackersSpawn;}
-        return defendersSpawn;
+    private void sendTitleSafe(Player player, String key, int fadeIn, int stay, int fadeOut) {
+        List<String> title = plugin.getMsg().getMessage(key, player);
+        if (title == null || title.isEmpty()) return;
+
+        String line1 = title.size() >= 1 ? title.get(0) : "";
+        String line2 = title.size() >= 2 ? title.get(1) : "";
+
+        player.sendTitle(line1, line2, fadeIn, stay, fadeOut);
     }
 
-    public void setLobbySpawn(Location loc) {
-        this.lobbySpawn = loc;
-    }
+    /* ------------------------- Setters ------------------------- */
 
-    public void setKingSpawn(Location loc) {
-        this.kingSpawn = loc;
-    }
-
-    public void setDefendersSpawn(Location loc) {
-        defendersSpawn = loc;
-    }
-
-    public void setAttackersSpawn(Location loc) {
-        attackersSpawn = loc;
-    }
-
-    public String getWorldName() {
-        return worldName;
-    }
-
-    public World getWorld() {
-        return Bukkit.getWorld(worldName);
-    }
-
-    public void setState(ArenaState state) {
-        this.state = state;
-    }
-
-    public boolean isHardcore() {
-        return hardcore;
-    }
-    public TeamManager getTeamManager() {
-        return teamManager;
-    }
+    public void setLobbySpawn(Location loc) { this.lobbySpawn = loc; }
+    public void setKingSpawn(Location loc) { this.kingSpawn = loc; }
+    public void setDefendersSpawn(Location loc) { this.defendersSpawn = loc; }
+    public void setAttackersSpawn(Location loc) { this.attackersSpawn = loc; }
 }
