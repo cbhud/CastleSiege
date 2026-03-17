@@ -14,6 +14,7 @@ import me.cbhud.castlesiege.kit.KillEffectManager;
 import me.cbhud.castlesiege.kit.KitManager;
 import me.cbhud.castlesiege.kit.PlayerKitManager;
 import me.cbhud.castlesiege.player.PlayerManager;
+import me.cbhud.castlesiege.scoreboard.NameTagManager;
 import me.cbhud.castlesiege.scoreboard.ScoreboardManager;
 import me.cbhud.castlesiege.team.TeamManager;
 import me.cbhud.castlesiege.utils.*;
@@ -34,7 +35,7 @@ public final class CastleSiege extends JavaPlugin {
 
     ArenaSelector arenaSelector;
     TeamSelector teamSelector;
-    private ArenaEditChatListener arenaEditChatListener;
+    ArenaEditChatListener arenaEditChatListener;
 
     PlayerManager playerManager;
     WorldEditPlugin worldEdit;
@@ -45,6 +46,7 @@ public final class CastleSiege extends JavaPlugin {
     DataManager dataManager;
     KillEffectManager killEffectManager;
     BossBar bossBar;
+    NameTagManager nameTagManager;
 
     @Override
     public void onEnable() {
@@ -93,6 +95,7 @@ public final class CastleSiege extends JavaPlugin {
 
         this.arenaEditChatListener = new ArenaEditChatListener(this);
         Bukkit.getPluginManager().registerEvents(arenaEditChatListener, this);
+        this.nameTagManager = new NameTagManager(this);
     }
 
     @Override
@@ -168,6 +171,10 @@ public final class CastleSiege extends JavaPlugin {
     }
 
     public ArenaEditChatListener getArenaEditChatListener() { return arenaEditChatListener; }
+
+    public NameTagManager getNameTagManager(){
+        return nameTagManager;
+    }
 
 
 }
