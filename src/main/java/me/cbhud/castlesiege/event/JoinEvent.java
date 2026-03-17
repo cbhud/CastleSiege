@@ -1,6 +1,7 @@
 package me.cbhud.castlesiege.event;
 
 import me.cbhud.castlesiege.CastleSiege;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -36,5 +37,6 @@ public class JoinEvent implements Listener {
 
         plugin.getScoreboardManager().removeScoreboard(p);
         plugin.getPlayerManager().clearPlayerState(p);
+        plugin.getNameTagManager().removeNametag(p);
     }
 }

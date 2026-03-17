@@ -81,4 +81,26 @@ public class ConfigManager {
         return  config.getBoolean("boss-bar.enabled", true);
     }
 
+    public ChatColor getDefendersColor() {
+        String colorCode = config.getString("defenders-nametag-color", "&9");
+
+        char codeChar = colorCode.charAt(1);
+
+        ChatColor color = ChatColor.getByChar(codeChar);
+
+        // Provide a safe fallback in case someone typos the config
+        return color != null ? color : ChatColor.BLUE;
+    }
+
+    public ChatColor getAttackersColor() {
+        String colorCode = config.getString("attackers-nametag-color", "&c");
+
+        char codeChar = colorCode.charAt(1);
+
+        ChatColor color = ChatColor.getByChar(codeChar);
+
+        // Provide a safe fallback in case someone typos the config
+        return color != null ? color : ChatColor.RED;
+    }
+
 }

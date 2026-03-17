@@ -226,7 +226,6 @@ public class Arena {
             plugin.getPlayerManager().setPlayerAsLobby(player);
         }
 
-        // ✅ Integration: never touch internal map directly
         plugin.getArenaManager().unmapPlayer(player.getUniqueId());
     }
 
@@ -315,6 +314,7 @@ public class Arena {
 
             sendLines(p, winMessageKey);
             sendTitleSafe(p, winTitleKey, 10, 70, 20);
+            plugin.getNameTagManager().removeNametag(p);
         }
 
         // Rewards using UUIDs (works even if winners disconnected)
@@ -368,11 +368,12 @@ public class Arena {
                     plugin.getPlayerKitManager().setDefaultKit(p);
                 }
                 plugin.getPlayerKitManager().giveKit(p, plugin.getPlayerKitManager().getSelectedKit(p));
-
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
                     if (team == Team.Defenders) {
+                        plugin.getNameTagManager().setDefender(p);
                         sendTitleSafe(p, "defendersTitle", 10, 100, 20);
                     } else {
+                        plugin.getNameTagManager().setAttacker(p);
                         sendTitleSafe(p, "attackersTitle", 10, 100, 20);
                     }
                     if (plugin.getBBar().isEnabled()) {

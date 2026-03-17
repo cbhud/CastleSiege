@@ -9,6 +9,10 @@ maxTeamDiff: 1
 attackersTeamName: Attackers
 defendersTeamName: Defenders
 
+##CHANGE TEAM NAMETAG PLATE COLORS
+defenders-nametag-color: &9
+attackers-nametag-color: &c
+
 ##BOSSBAR FOR KING HEALTH ENABLE OR DISABLE
 bossbar-enabled: true
 
