@@ -101,6 +101,7 @@ public final class CastleSiege extends JavaPlugin {
     @Override
     public void onDisable() {
         getDataManager().disconnect();
+        bossBar.cleanup();
     }
 
     public MobManager getMobManager() {

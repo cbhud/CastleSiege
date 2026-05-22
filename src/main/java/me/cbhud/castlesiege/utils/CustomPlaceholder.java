@@ -137,9 +137,9 @@ public class CustomPlaceholder extends PlaceholderExpansion {
 
     private void updateLeaderboardCache() {
         try {
-            cachedTopWins = String.join("\n", plugin.getDataManager().getTopWins());
-            cachedTopKills = String.join("\n", plugin.getDataManager().getTopKills());
-            cachedTopDeaths = String.join("\n", plugin.getDataManager().getTopDeaths());
+            cachedTopWins = String.join("\n", plugin.getDataManager().getTopWins().join());
+            cachedTopKills = String.join("\n", plugin.getDataManager().getTopKills().join());
+            cachedTopDeaths = String.join("\n", plugin.getDataManager().getTopDeaths().join());
         } catch (Exception e) {
             plugin.getLogger().warning("Failed to update leaderboard cache: " + e.getMessage());
         }
@@ -165,10 +165,10 @@ public class CustomPlaceholder extends PlaceholderExpansion {
             purgeNotOnline(cachedCoins, onlineUuids);
 
             for (UUID uuid : onlineUuids) {
-                cachedKills.put(uuid, plugin.getDataManager().getPlayerKills(uuid));
-                cachedDeaths.put(uuid, plugin.getDataManager().getPlayerDeaths(uuid));
-                cachedWins.put(uuid, plugin.getDataManager().getPlayerWins(uuid));
-                cachedCoins.put(uuid, plugin.getDataManager().getPlayerCoins(uuid));
+                cachedKills.put(uuid, plugin.getDataManager().getPlayerKills(uuid).join());
+                cachedDeaths.put(uuid, plugin.getDataManager().getPlayerDeaths(uuid).join());
+                cachedWins.put(uuid, plugin.getDataManager().getPlayerWins(uuid).join());
+                cachedCoins.put(uuid, plugin.getDataManager().getPlayerCoins(uuid).join());
             }
         } catch (Exception e) {
             plugin.getLogger().warning("Failed to update stats cache: " + e.getMessage());

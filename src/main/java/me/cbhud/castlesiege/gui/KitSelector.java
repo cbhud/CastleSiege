@@ -94,24 +94,33 @@ public class KitSelector {
     private void attemptToPurchaseKit(Player player, KitData selectedKit) {
         UUID uuid = player.getUniqueId();
         String kitname = selectedKit.getName();
-        if (selectedKit.getPrice() == 0){
+        if (selectedKit.getPrice() == 0) {
             plugin.getPlayerKitManager().selectKit(player, selectedKit);
             return;
         }
-        if (plugin.getDataManager().hasPlayerKit(uuid, kitname)){
-            player.sendMessage(plugin.getMsg().getMessage("alredayOwnKit", player).get(0));
-            selectKit(player, selectedKit);
-            return;
-        }
 
-        if (plugin.getDataManager().unlockPlayerKit(uuid, kitname, selectedKit.getPrice())) {
-                String msg1 = plugin.getMsg().getGuiMessage("purchaseKitSuccess").get(0);
-                msg1 = msg1.replace("{kitname}", String.valueOf(kitname));
-                player.sendMessage(msg1);
-            } else {
-            player.sendMessage(plugin.getMsg().getMessage("purchaseKitUnsuccess", player).get(0));
+        plugin.getDataManager().hasPlayerKit(uuid, kitname).thenAccept(hasKit -> {
+            if (hasKit) {
+                org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+                    player.sendMessage(plugin.getMsg().getMessage("alredayOwnKit", player).get(0));
+                    selectKit(player, selectedKit);
+                });
+                return;
             }
-        }
+
+            plugin.getDataManager().unlockPlayerKit(uuid, kitname, selectedKit.getPrice()).thenAccept(unlocked -> {
+                org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (unlocked) {
+                        String msg1 = plugin.getMsg().getGuiMessage("purchaseKitSuccess").get(0);
+                        msg1 = msg1.replace("{kitname}", String.valueOf(kitname));
+                        player.sendMessage(msg1);
+                    } else {
+                        player.sendMessage(plugin.getMsg().getMessage("purchaseKitUnsuccess", player).get(0));
+                    }
+                });
+            });
+        });
+    }
 
     private void selectKit(Player player, KitData selectedKit) {
         plugin.getPlayerKitManager().selectKit(player, selectedKit);
