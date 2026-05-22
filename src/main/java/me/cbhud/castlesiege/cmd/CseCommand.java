@@ -233,10 +233,10 @@ public class CseCommand implements CommandExecutor, TabCompleter {
                     targetUuid = off.getUniqueId();
                 }
 
-                int wins = plugin.getDataManager().getPlayerWins(targetUuid);
-                int kills = plugin.getDataManager().getPlayerKills(targetUuid);
-                int deaths = plugin.getDataManager().getPlayerDeaths(targetUuid);
-                int coins = plugin.getDataManager().getPlayerCoins(targetUuid);
+                int wins = plugin.getDataManager().getPlayerWins(targetUuid).join();
+                int kills = plugin.getDataManager().getPlayerKills(targetUuid).join();
+                int deaths = plugin.getDataManager().getPlayerDeaths(targetUuid).join();
+                int coins = plugin.getDataManager().getPlayerCoins(targetUuid).join();
 
                 double kdr = deaths > 0 ? (double) kills / deaths : kills;
 
@@ -346,6 +346,7 @@ public class CseCommand implements CommandExecutor, TabCompleter {
             cfg.set("lobby.pitch", loc.getPitch());
 
             cfg.save(file);
+            plugin.getPlayerManager().reloadLobbyLocation();
 
             player.sendMessage(ChatColor.GREEN + "Lobby location set!");
         } catch (IOException e) {

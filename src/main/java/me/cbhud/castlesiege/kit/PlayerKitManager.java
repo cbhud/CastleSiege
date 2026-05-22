@@ -35,15 +35,15 @@ public class PlayerKitManager {
         selectedKits.put(player, kit);
     }
 
-    public boolean selectKit(Player player, KitManager.KitData kit) {
+    public void selectKit(Player player, KitManager.KitData kit) {
         if (kit == null) {
             player.sendMessage("§cKit not found.");
-            return false;
+            return;
         }
 
         if (kit.getTeam() != plugin.getArenaManager().getArenaByPlayer(player.getUniqueId()).getTeam(player)) {
             player.sendMessage(plugin.getMsg().getMessage("opposingTeamKit", player).get(0));
-            return false;
+            return;
         }
 
         if (kit.getPrice() == 0) {
@@ -52,21 +52,22 @@ public class PlayerKitManager {
             String msg = plugin.getMsg().getMessage("selectedKit", player).get(0);
             msg = msg.replace("{kit}", kit.getName());
             player.sendMessage(msg);
-            return true;
+            return;
         }
 
-        if (plugin.getDataManager().hasPlayerKit(player.getUniqueId(), kit.getName())) {
-                selectedKits.put(player, kit);
-                plugin.getScoreboardManager().updateScoreboard(player, "pre-game");
-                String msg = plugin.getMsg().getMessage("selectedKit", player).get(0);
-                msg = msg.replace("{kit}", kit.getName());
-                player.sendMessage(msg);                return true;
-            }
-        else{
-            player.sendMessage(plugin.getMsg().getMessage("lockedKit", player).get(0));
-            return false;
-        }
-
+        plugin.getDataManager().hasPlayerKit(player.getUniqueId(), kit.getName()).thenAccept(hasKit -> {
+            org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+                if (hasKit) {
+                    selectedKits.put(player, kit);
+                    plugin.getScoreboardManager().updateScoreboard(player, "pre-game");
+                    String msg = plugin.getMsg().getMessage("selectedKit", player).get(0);
+                    msg = msg.replace("{kit}", kit.getName());
+                    player.sendMessage(msg);
+                } else {
+                    player.sendMessage(plugin.getMsg().getMessage("lockedKit", player).get(0));
+                }
+            });
+        });
     }
 
 

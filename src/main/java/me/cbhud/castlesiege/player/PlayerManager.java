@@ -73,11 +73,11 @@ public class PlayerManager {
 
             playerStates.put(player.getUniqueId(), IN_LOBBY);
 
-            if (loadLobbyLocation() == null) {
+            if (getLobbyLocation() == null) {
                 Bukkit.broadcastMessage("§cThe Main lobby spawn has not been set, please set it or notify the admin");
                 Bukkit.broadcastMessage("§cCommand: /cse setlobby");
             } else {
-                player.teleport(loadLobbyLocation());
+                player.teleport(getLobbyLocation());
             }
 
             plugin.getScoreboardManager().setupScoreboard(player);
@@ -137,6 +137,19 @@ public class PlayerManager {
         for (PotionEffect effect : player.getActivePotionEffects()) {
             player.removePotionEffect(effect.getType());
         }
+    }
+
+    private Location cachedLobbyLocation = null;
+
+    public void reloadLobbyLocation() {
+        this.cachedLobbyLocation = loadLobbyLocation();
+    }
+
+    public Location getLobbyLocation() {
+        if (cachedLobbyLocation == null) {
+            cachedLobbyLocation = loadLobbyLocation();
+        }
+        return cachedLobbyLocation;
     }
 
     private Location loadLobbyLocation() {

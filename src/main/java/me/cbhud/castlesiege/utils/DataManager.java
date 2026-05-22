@@ -11,6 +11,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public class DataManager {
@@ -78,44 +79,48 @@ public class DataManager {
         }
     }
 
-    public boolean hasPlayerKit(UUID playerUUID, String kitName) {
-        String sql = """
-        SELECT 1
-        FROM player_kits pk
-        JOIN kits k ON pk.kit_id = k.id
-        WHERE pk.player_uuid = ? AND k.name = ?
-        LIMIT 1
-        """;
+    public CompletableFuture<Boolean> hasPlayerKit(UUID playerUUID, String kitName) {
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = """
+            SELECT 1
+            FROM player_kits pk
+            JOIN kits k ON pk.kit_id = k.id
+            WHERE pk.player_uuid = ? AND k.name = ?
+            LIMIT 1
+            """;
 
-        try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            try (Connection conn = getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setString(1, playerUUID.toString());
-            stmt.setString(2, kitName);
+                stmt.setString(1, playerUUID.toString());
+                stmt.setString(2, kitName);
 
-            try (ResultSet rs = stmt.executeQuery()) {
-                return rs.next();
+                try (ResultSet rs = stmt.executeQuery()) {
+                    return rs.next();
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().severe("Error checking if player owns kit: " + e.getMessage());
+                e.printStackTrace();
+                return false;
             }
-        } catch (SQLException e) {
-            plugin.getLogger().severe("Error checking if player owns kit: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
+        });
     }
 
-    public boolean hasData(UUID uuid) {
-        String sql = "SELECT 1 FROM player_stats WHERE uuid = ? LIMIT 1";
+    public CompletableFuture<Boolean> hasData(UUID uuid) {
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = "SELECT 1 FROM player_stats WHERE uuid = ? LIMIT 1";
 
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement statement = conn.prepareStatement(sql)) {
-            statement.setString(1, uuid.toString());
-            try (ResultSet rs = statement.executeQuery()) {
-                return rs.next();
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement statement = conn.prepareStatement(sql)) {
+                statement.setString(1, uuid.toString());
+                try (ResultSet rs = statement.executeQuery()) {
+                    return rs.next();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
+            return false;
+        });
     }
 
     public void createProfile(UUID playerUUID, String username) {
@@ -124,8 +129,8 @@ public class DataManager {
         VALUES (?, ?, 0, 0, 0, 0)
         """;
 
-        Bukkit.getScheduler().runTask(plugin, () -> {
-            if (!hasData(playerUUID)) {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            if (!hasData(playerUUID).join()) {
                 try (Connection conn = dataSource.getConnection();
                      PreparedStatement statement = conn.prepareStatement(insertProfileSql)) {
                     statement.setString(1, playerUUID.toString());
@@ -205,72 +210,80 @@ public class DataManager {
         }.runTaskAsynchronously(plugin);
     }
 
-    public int getPlayerKills(UUID uuid) {
-        String getKillsSql = "SELECT kills FROM player_stats WHERE uuid = ?";
+    public CompletableFuture<Integer> getPlayerKills(UUID uuid) {
+        return CompletableFuture.supplyAsync(() -> {
+            String getKillsSql = "SELECT kills FROM player_stats WHERE uuid = ?";
 
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement statement = conn.prepareStatement(getKillsSql)) {
-            statement.setString(1, uuid.toString());
-            try (ResultSet rs = statement.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("kills");
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement statement = conn.prepareStatement(getKillsSql)) {
+                statement.setString(1, uuid.toString());
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt("kills");
+                    }
                 }
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return 0;
+            return 0;
+        });
     }
 
-    public int getPlayerWins(UUID uuid) {
-        String getKillsSql = "SELECT wins FROM player_stats WHERE uuid = ?";
+    public CompletableFuture<Integer> getPlayerWins(UUID uuid) {
+        return CompletableFuture.supplyAsync(() -> {
+            String getWinsSql = "SELECT wins FROM player_stats WHERE uuid = ?";
 
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement statement = conn.prepareStatement(getKillsSql)) {
-            statement.setString(1, uuid.toString());
-            try (ResultSet rs = statement.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("wins");
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement statement = conn.prepareStatement(getWinsSql)) {
+                statement.setString(1, uuid.toString());
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt("wins");
+                    }
                 }
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return 0;
+            return 0;
+        });
     }
 
-    public int getPlayerDeaths(UUID uuid) {
-        String getKillsSql = "SELECT deaths FROM player_stats WHERE uuid = ?";
+    public CompletableFuture<Integer> getPlayerDeaths(UUID uuid) {
+        return CompletableFuture.supplyAsync(() -> {
+            String getDeathsSql = "SELECT deaths FROM player_stats WHERE uuid = ?";
 
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement statement = conn.prepareStatement(getKillsSql)) {
-            statement.setString(1, uuid.toString());
-            try (ResultSet rs = statement.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("deaths");
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement statement = conn.prepareStatement(getDeathsSql)) {
+                statement.setString(1, uuid.toString());
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt("deaths");
+                    }
                 }
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return 0;
+            return 0;
+        });
     }
 
-    public int getPlayerCoins(UUID uuid) {
-        String getCoinsSql = "SELECT coins FROM player_stats WHERE uuid = ?";
+    public CompletableFuture<Integer> getPlayerCoins(UUID uuid) {
+        return CompletableFuture.supplyAsync(() -> {
+            String getCoinsSql = "SELECT coins FROM player_stats WHERE uuid = ?";
 
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement statement = conn.prepareStatement(getCoinsSql)) {
-            statement.setString(1, uuid.toString());
-            try (ResultSet rs = statement.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("coins");
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement statement = conn.prepareStatement(getCoinsSql)) {
+                statement.setString(1, uuid.toString());
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt("coins");
+                    }
                 }
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return 0;
+            return 0;
+        });
     }
 
     public void removePlayerCoins(UUID uuid, int coinsToRemove, Consumer<Boolean> callback) {
@@ -316,120 +329,128 @@ public class DataManager {
         }.runTaskAsynchronously(plugin);
     }
 
-    public boolean unlockPlayerKit(UUID uuid, String kitName, int kitPrice) {
-        String checkCoinsSql = "SELECT coins FROM player_stats WHERE uuid = ?";
-        String updateCoinsSql = "UPDATE player_stats SET coins = coins - ? WHERE uuid = ?";
-        String unlockKitSql = """
-        MERGE INTO player_kits (player_uuid, kit_id)
-        KEY (player_uuid, kit_id)
-        SELECT ?, id FROM kits WHERE name = ?
-        """;
+    public CompletableFuture<Boolean> unlockPlayerKit(UUID uuid, String kitName, int kitPrice) {
+        return CompletableFuture.supplyAsync(() -> {
+            String checkCoinsSql = "SELECT coins FROM player_stats WHERE uuid = ?";
+            String updateCoinsSql = "UPDATE player_stats SET coins = coins - ? WHERE uuid = ?";
+            String unlockKitSql = """
+            MERGE INTO player_kits (player_uuid, kit_id)
+            KEY (player_uuid, kit_id)
+            SELECT ?, id FROM kits WHERE name = ?
+            """;
 
-        try (Connection conn = getConnection()) {
-            conn.setAutoCommit(false);
+            try (Connection conn = getConnection()) {
+                conn.setAutoCommit(false);
 
-            try (PreparedStatement checkCoinsStmt = conn.prepareStatement(checkCoinsSql)) {
-                checkCoinsStmt.setString(1, uuid.toString());
-                try (ResultSet rs = checkCoinsStmt.executeQuery()) {
-                    if (rs.next()) {
-                        int coins = rs.getInt("coins");
-                        if (coins < kitPrice) {
+                try (PreparedStatement checkCoinsStmt = conn.prepareStatement(checkCoinsSql)) {
+                    checkCoinsStmt.setString(1, uuid.toString());
+                    try (ResultSet rs = checkCoinsStmt.executeQuery()) {
+                        if (rs.next()) {
+                            int coins = rs.getInt("coins");
+                            if (coins < kitPrice) {
+                                conn.rollback();
+                                return false;
+                            }
+                        } else {
                             conn.rollback();
                             return false;
                         }
-                    } else {
-                        conn.rollback();
-                        return false;
                     }
                 }
+
+                try (PreparedStatement updateCoinsStmt = conn.prepareStatement(updateCoinsSql)) {
+                    updateCoinsStmt.setInt(1, kitPrice);
+                    updateCoinsStmt.setString(2, uuid.toString());
+                    updateCoinsStmt.executeUpdate();
+                }
+
+                try (PreparedStatement unlockKitStmt = conn.prepareStatement(unlockKitSql)) {
+                    unlockKitStmt.setString(1, uuid.toString());
+                    unlockKitStmt.setString(2, kitName);
+                    unlockKitStmt.executeUpdate();
+                }
+
+                conn.commit();
+                return true;
+
+            } catch (SQLException e) {
+                plugin.getLogger().severe("Failed to unlock kit: " + e.getMessage());
+                e.printStackTrace();
+                return false;
             }
-
-            try (PreparedStatement updateCoinsStmt = conn.prepareStatement(updateCoinsSql)) {
-                updateCoinsStmt.setInt(1, kitPrice);
-                updateCoinsStmt.setString(2, uuid.toString());
-                updateCoinsStmt.executeUpdate();
-            }
-
-            try (PreparedStatement unlockKitStmt = conn.prepareStatement(unlockKitSql)) {
-                unlockKitStmt.setString(1, uuid.toString());
-                unlockKitStmt.setString(2, kitName);
-                unlockKitStmt.executeUpdate();
-            }
-
-            conn.commit();
-            return true;
-
-        } catch (SQLException e) {
-            plugin.getLogger().severe("Failed to unlock kit: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
+        });
     }
 
-    public List<String> getTopWins() {
-        String sql = "SELECT username, wins FROM player_stats ORDER BY wins DESC LIMIT 10";
-        List<String> topWins = new ArrayList<>();
+    public CompletableFuture<List<String>> getTopWins() {
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = "SELECT username, wins FROM player_stats ORDER BY wins DESC LIMIT 10";
+            List<String> topWins = new ArrayList<>();
 
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement statement = conn.prepareStatement(sql);
-             ResultSet rs = statement.executeQuery()) {
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement statement = conn.prepareStatement(sql);
+                 ResultSet rs = statement.executeQuery()) {
 
-            while (rs.next()) {
-                String username = rs.getString("username");
-                int wins = rs.getInt("wins");
-                String formatted = ChatColor.translateAlternateColorCodes('&',
-                        "&e" + username + " &7- &a" + wins);
-                topWins.add(formatted);
+                while (rs.next()) {
+                    String username = rs.getString("username");
+                    int wins = rs.getInt("wins");
+                    String formatted = ChatColor.translateAlternateColorCodes('&',
+                            "&e" + username + " &7- &a" + wins);
+                    topWins.add(formatted);
+                }
+
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return topWins;
+            return topWins;
+        });
     }
 
-    public List<String> getTopDeaths() {
-        String sql = "SELECT username, deaths FROM player_stats ORDER BY wins DESC LIMIT 10";
-        List<String> topDeaths = new ArrayList<>();
+    public CompletableFuture<List<String>> getTopDeaths() {
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = "SELECT username, deaths FROM player_stats ORDER BY deaths DESC LIMIT 10";
+            List<String> topDeaths = new ArrayList<>();
 
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement statement = conn.prepareStatement(sql);
-             ResultSet rs = statement.executeQuery()) {
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement statement = conn.prepareStatement(sql);
+                 ResultSet rs = statement.executeQuery()) {
 
-            while (rs.next()) {
-                String username = rs.getString("username");
-                int deaths = rs.getInt("deaths");
-                String formatted = ChatColor.translateAlternateColorCodes('&',
-                        "&e" + username + " &7- &c" + deaths);
-                topDeaths.add(formatted);
+                while (rs.next()) {
+                    String username = rs.getString("username");
+                    int deaths = rs.getInt("deaths");
+                    String formatted = ChatColor.translateAlternateColorCodes('&',
+                            "&e" + username + " &7- &c" + deaths);
+                    topDeaths.add(formatted);
+                }
+
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return topDeaths;
+            return topDeaths;
+        });
     }
 
-    public List<String> getTopKills() {
-        String sql = "SELECT username, kills FROM player_stats ORDER BY wins DESC LIMIT 10";
-        List<String> topKills = new ArrayList<>();
+    public CompletableFuture<List<String>> getTopKills() {
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = "SELECT username, kills FROM player_stats ORDER BY kills DESC LIMIT 10";
+            List<String> topKills = new ArrayList<>();
 
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement statement = conn.prepareStatement(sql);
-             ResultSet rs = statement.executeQuery()) {
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement statement = conn.prepareStatement(sql);
+                 ResultSet rs = statement.executeQuery()) {
 
-            while (rs.next()) {
-                String username = rs.getString("username");
-                int kills = rs.getInt("kills");
-                String formatted = ChatColor.translateAlternateColorCodes('&',
-                        "&e" + username + " &7- &b" + kills);
-                topKills.add(formatted);
+                while (rs.next()) {
+                    String username = rs.getString("username");
+                    int kills = rs.getInt("kills");
+                    String formatted = ChatColor.translateAlternateColorCodes('&',
+                            "&e" + username + " &7- &b" + kills);
+                    topKills.add(formatted);
+                }
+
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return topKills;
+            return topKills;
+        });
     }
 
 

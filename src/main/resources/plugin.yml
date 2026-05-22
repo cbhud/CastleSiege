@@ -1,5 +1,5 @@
 name: CastleSiege
-version: '2.0.9'
+version: '2.1.0'
 main: me.cbhud.castlesiege.CastleSiege
 author: cbhud
 api-version: '1.20'

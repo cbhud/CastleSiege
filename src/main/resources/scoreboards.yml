@@ -1,3 +1,14 @@
+settings:
+  auto-refresh:
+    enabled: true
+## 20 ticks = 1 second
+    interval-ticks: 100
+## states in which you want scoreboard to be updated continuously, for in-game scoreboard it is always updated because of the timer.
+    states:
+      - lobby
+      - waiting
+      - pre-game
+
 lobby:
   Title: "<#084CFB>C<#2468FB>a<#3F84FC>s<#5BA0FC>t<#76BBFC>l<#92D7FD>e <#ADF3FD>S<#ADF3FD>i<#ADF3FD>e<#ADF3FD>g<#ADF3FD>e"
   lines:

@@ -8,6 +8,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.util.*;
@@ -21,9 +22,15 @@ public class ScoreboardManager {
 
     // UUID -> FastBoard (no Player keys)
     private final Map<UUID, FastBoard> scoreboards = new ConcurrentHashMap<>();
+    private final Map<UUID, String> scoreboardStates = new ConcurrentHashMap<>();
 
     private FileConfiguration scoreboardConfig;
     private boolean placeholderEnabled;
+
+    private BukkitTask refreshTask;
+    private boolean autoRefreshEnabled;
+    private long autoRefreshIntervalTicks;
+    private Set<String> autoRefreshStates;
 
     // Precompiled patterns (performance)
     private static final Pattern HEX_PATTERN = Pattern.compile("<#([A-Fa-f0-9]{6})>");
@@ -33,6 +40,7 @@ public class ScoreboardManager {
         this.plugin = plugin;
         loadConfig();
         refreshPlaceholderFlag();
+        startRefreshTask();
     }
 
     private void loadConfig() {
@@ -41,16 +49,63 @@ public class ScoreboardManager {
             plugin.saveResource("scoreboards.yml", false);
         }
         scoreboardConfig = YamlConfiguration.loadConfiguration(file);
+
+        autoRefreshEnabled = scoreboardConfig.getBoolean("settings.auto-refresh.enabled", true);
+        autoRefreshIntervalTicks = Math.max(20L, scoreboardConfig.getLong("settings.auto-refresh.interval-ticks", 100L));
+
+        List<String> rawStates = scoreboardConfig.getStringList("settings.auto-refresh.states");
+        if (!scoreboardConfig.contains("settings.auto-refresh.states")) {
+            rawStates = Arrays.asList("lobby", "waiting");
+        }
+
+        autoRefreshStates = new HashSet<>();
+        for (String s : rawStates) {
+            autoRefreshStates.add(s.toLowerCase(Locale.ROOT));
+        }
+    }
+
+    private void startRefreshTask() {
+        if (refreshTask != null) {
+            refreshTask.cancel();
+            refreshTask = null;
+        }
+
+        if (autoRefreshEnabled) {
+            refreshTask = Bukkit.getScheduler().runTaskTimer(plugin, this::refreshAutoRefreshScoreboards, autoRefreshIntervalTicks, autoRefreshIntervalTicks);
+        }
+    }
+
+    private void refreshAutoRefreshScoreboards() {
+        for (UUID uuid : scoreboards.keySet()) {
+            Player player = Bukkit.getPlayer(uuid);
+
+            if (player == null || !player.isOnline()) {
+                removeScoreboard(uuid);
+                continue;
+            }
+
+            String state = scoreboardStates.get(uuid);
+            if (state == null) {
+                continue;
+            }
+
+            if (!autoRefreshStates.contains(state.toLowerCase(Locale.ROOT))) {
+                continue;
+            }
+
+            // Directly call update logic for existing boards instead of setting up again
+            updateScoreboard(player, state);
+        }
     }
 
     private void refreshPlaceholderFlag() {
         this.placeholderEnabled = Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI");
     }
 
-    /** Optional: call if you support /reloadscoreboards or similar. */
     public void reloadConfig() {
         loadConfig();
         refreshPlaceholderFlag();
+        startRefreshTask();
     }
 
     public void setupScoreboard(Player player) {
@@ -82,6 +137,7 @@ public class ScoreboardManager {
         }
 
         String gameState = state.toLowerCase(Locale.ROOT);
+        scoreboardStates.put(uuid, gameState);
 
         String rawTitle = scoreboardConfig.getString(gameState + ".Title", "&6Default Title");
         String title = processText(player, rawTitle);
@@ -183,6 +239,7 @@ public class ScoreboardManager {
 
     public void removeScoreboard(UUID uuid) {
         if (uuid == null) return;
+        scoreboardStates.remove(uuid);
         FastBoard board = scoreboards.remove(uuid);
         if (board != null) board.delete();
     }
