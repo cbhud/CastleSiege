@@ -1,13 +1,6 @@
-
-# Introducing the exciting **Castle Siege** minigame!
-
 ![Castle Siege](https://i.imgur.com/KJ6rcgm.jpeg)
 
 ## **Seize or shield in Castle Siege. Your goal? Assassinate the King or protect the throne.**
-
----
-
-## Castle Siege Overview
 
 Castle Siege is a modern remake of the classic Mineplex minigame, with a focus on customizable gameplay and maximum player enjoyment. New abilities, kill effects, and full kit control let server owners create unique and fun combat experiences.
 [Wiki](https://castle-siege.gitbook.io/castle-siege-docs)
