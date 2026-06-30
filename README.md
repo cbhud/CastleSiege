@@ -19,8 +19,6 @@ Castle Siege is a modern remake of the classic Mineplex minigame, with a focus o
 - **Placeholders:** Integrate custom placeholders into messages, holograms, and scoreboards.
 - **Stats & Leaderboards:** Track player's statistics using /stats also 3 different placeholders for leaderboards are included to make it more competitive. 
 
----
-
 ## Images
 In case GIF don't show check images here [CLICK](https://imgur.com/a/VaBrrZy)
 
