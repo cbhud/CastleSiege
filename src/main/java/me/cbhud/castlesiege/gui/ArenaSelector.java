@@ -32,7 +32,6 @@ public class ArenaSelector {
                 .create();
     }
 
-    // Removed synchronization
     private void init() {
         int slot = 0;
         for (Arena arena : arenaManager.getArenas()) {
@@ -95,11 +94,9 @@ public class ArenaSelector {
                         ? arena.getWorldName().replaceAll("\\d", "")
                         : "Unknown")
                 .replace("{type}", arena.isHardcore() ? "Hardcore" : "Normal")
-                // Add any other placeholders you need based on your Arena class methods
                 ;
     }
 
-    // Removed synchronization here as well
     private void handleArenaSelection(InventoryClickEvent event, Arena arena) {
         if (!(event.getWhoClicked() instanceof Player)) return;
         Player player = (Player) event.getWhoClicked();

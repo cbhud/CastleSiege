@@ -81,13 +81,12 @@ public class ArenaManager {
             removePlayerFromArena(player); // removes mapping + calls arena.removePlayer
         }
 
-        // ✅ Map FIRST so any downstream code (kits/teams) can resolve arena
+        // I map first so downstream kit and team code can resolve the arena during join.
         playerArenaMap.put(playerId, arena);
 
         arena.addPlayer(player);
 
-        // ✅ If addPlayer didn't actually keep them in this arena, rollback mapping
-        // (works with your UUID-based Arena: containsPlayer(uuid) or getNoPlayers checks)
+        // I roll back the map entry if addPlayer did not actually keep them in this arena.
         if (!arena.containsPlayer(playerId)) {
             playerArenaMap.remove(playerId);
         }
@@ -112,6 +111,32 @@ public class ArenaManager {
         loadArenas();
     }
 
+    /**
+     * Reloads one arena from arenas.yml without clearing other arenas or player mappings.
+     * Returns false if the arena is active or has players, because replacing it would drop runtime state.
+     */
+    public boolean reloadArena(String arenaId) {
+        if (arenaId == null || arenaId.isBlank()) return false;
+
+        Arena existing = arenas.get(arenaId);
+        if (existing != null && (existing.getState() != ArenaState.WAITING || existing.getNoPlayers() > 0)) {
+            plugin.getLogger().warning("Arena '" + arenaId + "' was saved but not hot-reloaded because it is active or has players.");
+            return false;
+        }
+
+        this.config = YamlConfiguration.loadConfiguration(configFile);
+
+        ConfigurationSection section = getArenaSection(arenaId);
+        if (section == null) return false;
+
+        Arena arena = loadArena(arenaId, section);
+        if (arena == null) return false;
+
+        arenas.put(arenaId, arena);
+        plugin.getArenaResetManager().reload();
+        return true;
+    }
+
     /* ------------------------- Arena loading ------------------------- */
 
     private void loadArenas() {
@@ -122,39 +147,41 @@ public class ArenaManager {
             ConfigurationSection section = arenasSection.getConfigurationSection(arenaId);
             if (section == null) continue;
 
-            Location lobbySpawn = parseLocation(section.getString("lobby-spawn"), arenaId, "lobby-spawn");
-            Location kingSpawn = parseLocation(section.getString("king-spawn"), arenaId, "king-spawn");
-            Location defendersSpawn = parseLocation(section.getString("defenders-spawn"), arenaId, "defenders-spawn");
-            Location attackersSpawn = parseLocation(section.getString("attackers-spawn"), arenaId, "attackers-spawn");
-
-            int autoStart = section.getInt("auto-start", 60);
-            int countdown = section.getInt("game-timer", 300);
-            int minPlayers = section.getInt("min-players", 2);
-            int maxPlayers = section.getInt("max-players", 16);
-            boolean hardcore = section.getBoolean("hardcore", false);
-
-            // Determine worldName safely
-            String worldName = null;
-            if (kingSpawn != null && kingSpawn.getWorld() != null) {
-                worldName = kingSpawn.getWorld().getName();
-            } else {
-                String raw = section.getString("king-spawn");
-                if (raw != null) {
-                    String[] parts = raw.split(",");
-                    if (parts.length >= 1) worldName = parts[0].trim();
-                }
-            }
-
-            if (worldName == null || worldName.isBlank()) {
-                plugin.getLogger().warning("Arena '" + arenaId + "' has no valid worldName (king-spawn missing/invalid). Skipping arena load.");
-                continue;
-            }
-
-            Arena arena = new Arena(plugin, arenaId, lobbySpawn, kingSpawn, attackersSpawn, defendersSpawn,
-                    maxPlayers, minPlayers, autoStart, countdown, worldName, hardcore);
-
-            arenas.put(arenaId, arena);
+            Arena arena = loadArena(arenaId, section);
+            if (arena != null) arenas.put(arenaId, arena);
         }
+    }
+
+    private Arena loadArena(String arenaId, ConfigurationSection section) {
+        Location lobbySpawn = parseLocation(section.getString("lobby-spawn"), arenaId, "lobby-spawn");
+        Location kingSpawn = parseLocation(section.getString("king-spawn"), arenaId, "king-spawn");
+        Location defendersSpawn = parseLocation(section.getString("defenders-spawn"), arenaId, "defenders-spawn");
+        Location attackersSpawn = parseLocation(section.getString("attackers-spawn"), arenaId, "attackers-spawn");
+
+        int autoStart = section.getInt("auto-start", 60);
+        int countdown = section.getInt("game-timer", 300);
+        int minPlayers = section.getInt("min-players", 2);
+        int maxPlayers = section.getInt("max-players", 16);
+        boolean hardcore = section.getBoolean("hardcore", false);
+
+        String worldName = null;
+        if (kingSpawn != null && kingSpawn.getWorld() != null) {
+            worldName = kingSpawn.getWorld().getName();
+        } else {
+            String raw = section.getString("king-spawn");
+            if (raw != null) {
+                String[] parts = raw.split(",");
+                if (parts.length >= 1) worldName = parts[0].trim();
+            }
+        }
+
+        if (worldName == null || worldName.isBlank()) {
+            plugin.getLogger().warning("Arena '" + arenaId + "' has no valid worldName (king-spawn missing/invalid). Skipping arena load.");
+            return null;
+        }
+
+        return new Arena(plugin, arenaId, lobbySpawn, kingSpawn, attackersSpawn, defendersSpawn,
+                maxPlayers, minPlayers, autoStart, countdown, worldName, hardcore);
     }
 
     /* ------------------------- Config helpers ------------------------- */

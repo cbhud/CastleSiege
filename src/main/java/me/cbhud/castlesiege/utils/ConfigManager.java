@@ -26,10 +26,13 @@ public class ConfigManager {
         }
 
         config = YamlConfiguration.loadConfiguration(configFile);
-        // Add defaults for nametag prefixes if missing
         boolean changed = false;
-        if (!config.contains("attackersNametagPrefix")) { config.set("attackersNametagPrefix", "&c"); changed = true; }
-        if (!config.contains("defendersNametagPrefix")) { config.set("defendersNametagPrefix", "&b"); changed = true; }
+        if (!config.contains("boss-bar.enabled")) {
+            config.set("boss-bar.enabled", config.getBoolean("bossbar-enabled", true));
+            changed = true;
+        }
+        if (!config.contains("attackers-nametag-color")) { config.set("attackers-nametag-color", "&c"); changed = true; }
+        if (!config.contains("defenders-nametag-color")) { config.set("defenders-nametag-color", "&9"); changed = true; }
         if (changed) saveConfig();
     }
 
@@ -78,29 +81,26 @@ public class ConfigManager {
     }
 
     public boolean getBossBarEnabled() {
-        return  config.getBoolean("boss-bar.enabled", true);
+        return config.getBoolean("boss-bar.enabled", config.getBoolean("bossbar-enabled", true));
     }
 
     public ChatColor getDefendersColor() {
         String colorCode = config.getString("defenders-nametag-color", "&9");
-
-        char codeChar = colorCode.charAt(1);
-
-        ChatColor color = ChatColor.getByChar(codeChar);
-
-        // Provide a safe fallback in case someone typos the config
-        return color != null ? color : ChatColor.BLUE;
+        return parseColor(colorCode, ChatColor.BLUE);
     }
 
     public ChatColor getAttackersColor() {
         String colorCode = config.getString("attackers-nametag-color", "&c");
+        return parseColor(colorCode, ChatColor.RED);
+    }
 
-        char codeChar = colorCode.charAt(1);
+    private ChatColor parseColor(String colorCode, ChatColor fallback) {
+        if (colorCode == null || colorCode.length() < 2 || colorCode.charAt(0) != '&') {
+            return fallback;
+        }
 
-        ChatColor color = ChatColor.getByChar(codeChar);
-
-        // Provide a safe fallback in case someone typos the config
-        return color != null ? color : ChatColor.RED;
+        ChatColor color = ChatColor.getByChar(colorCode.charAt(1));
+        return color != null ? color : fallback;
     }
 
 }

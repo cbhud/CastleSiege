@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class DataManager {
     private final CastleSiege plugin;
@@ -80,7 +81,7 @@ public class DataManager {
     }
 
     public CompletableFuture<Boolean> hasPlayerKit(UUID playerUUID, String kitName) {
-        return CompletableFuture.supplyAsync(() -> {
+        return supplyDatabaseAsync(() -> {
             String sql = """
             SELECT 1
             FROM player_kits pk
@@ -107,7 +108,7 @@ public class DataManager {
     }
 
     public CompletableFuture<Boolean> hasData(UUID uuid) {
-        return CompletableFuture.supplyAsync(() -> {
+        return supplyDatabaseAsync(() -> {
             String sql = "SELECT 1 FROM player_stats WHERE uuid = ? LIMIT 1";
 
             try (Connection conn = dataSource.getConnection();
@@ -143,24 +144,16 @@ public class DataManager {
         });
     }
 
-    public void incrementWins(UUID uuid, int coinsToAdd) {
+    public void incrementWins(UUID uuid) {
         String updateWinsSql = "UPDATE player_stats SET wins = wins + 1 WHERE uuid = ?";
-        String updateCoinsSql = "UPDATE player_stats SET coins = coins + ? WHERE uuid = ?";
 
         new BukkitRunnable() {
             @Override
             public void run() {
-                try (Connection conn = dataSource.getConnection()) {
-                    try (PreparedStatement statement = conn.prepareStatement(updateWinsSql)) {
-                        statement.setString(1, uuid.toString());
-                        statement.executeUpdate();
-                    }
-
-                    try (PreparedStatement coinsStatement = conn.prepareStatement(updateCoinsSql)) {
-                        coinsStatement.setInt(1, coinsToAdd);
-                        coinsStatement.setString(2, uuid.toString());
-                        coinsStatement.executeUpdate();
-                    }
+                try (Connection conn = dataSource.getConnection();
+                     PreparedStatement statement = conn.prepareStatement(updateWinsSql)) {
+                    statement.setString(1, uuid.toString());
+                    statement.executeUpdate();
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -211,7 +204,7 @@ public class DataManager {
     }
 
     public CompletableFuture<Integer> getPlayerKills(UUID uuid) {
-        return CompletableFuture.supplyAsync(() -> {
+        return supplyDatabaseAsync(() -> {
             String getKillsSql = "SELECT kills FROM player_stats WHERE uuid = ?";
 
             try (Connection conn = dataSource.getConnection();
@@ -230,7 +223,7 @@ public class DataManager {
     }
 
     public CompletableFuture<Integer> getPlayerWins(UUID uuid) {
-        return CompletableFuture.supplyAsync(() -> {
+        return supplyDatabaseAsync(() -> {
             String getWinsSql = "SELECT wins FROM player_stats WHERE uuid = ?";
 
             try (Connection conn = dataSource.getConnection();
@@ -249,7 +242,7 @@ public class DataManager {
     }
 
     public CompletableFuture<Integer> getPlayerDeaths(UUID uuid) {
-        return CompletableFuture.supplyAsync(() -> {
+        return supplyDatabaseAsync(() -> {
             String getDeathsSql = "SELECT deaths FROM player_stats WHERE uuid = ?";
 
             try (Connection conn = dataSource.getConnection();
@@ -268,7 +261,7 @@ public class DataManager {
     }
 
     public CompletableFuture<Integer> getPlayerCoins(UUID uuid) {
-        return CompletableFuture.supplyAsync(() -> {
+        return supplyDatabaseAsync(() -> {
             String getCoinsSql = "SELECT coins FROM player_stats WHERE uuid = ?";
 
             try (Connection conn = dataSource.getConnection();
@@ -330,7 +323,7 @@ public class DataManager {
     }
 
     public CompletableFuture<Boolean> unlockPlayerKit(UUID uuid, String kitName, int kitPrice) {
-        return CompletableFuture.supplyAsync(() -> {
+        return supplyDatabaseAsync(() -> {
             String checkCoinsSql = "SELECT coins FROM player_stats WHERE uuid = ?";
             String updateCoinsSql = "UPDATE player_stats SET coins = coins - ? WHERE uuid = ?";
             String unlockKitSql = """
@@ -382,7 +375,7 @@ public class DataManager {
     }
 
     public CompletableFuture<List<String>> getTopWins() {
-        return CompletableFuture.supplyAsync(() -> {
+        return supplyDatabaseAsync(() -> {
             String sql = "SELECT username, wins FROM player_stats ORDER BY wins DESC LIMIT 10";
             List<String> topWins = new ArrayList<>();
 
@@ -406,7 +399,7 @@ public class DataManager {
     }
 
     public CompletableFuture<List<String>> getTopDeaths() {
-        return CompletableFuture.supplyAsync(() -> {
+        return supplyDatabaseAsync(() -> {
             String sql = "SELECT username, deaths FROM player_stats ORDER BY deaths DESC LIMIT 10";
             List<String> topDeaths = new ArrayList<>();
 
@@ -430,7 +423,7 @@ public class DataManager {
     }
 
     public CompletableFuture<List<String>> getTopKills() {
-        return CompletableFuture.supplyAsync(() -> {
+        return supplyDatabaseAsync(() -> {
             String sql = "SELECT username, kills FROM player_stats ORDER BY kills DESC LIMIT 10";
             List<String> topKills = new ArrayList<>();
 
@@ -469,5 +462,17 @@ public class DataManager {
             dataSource.close();
             plugin.getLogger().info("Database connection pool closed.");
         }
+    }
+
+    private <T> CompletableFuture<T> supplyDatabaseAsync(Supplier<T> supplier) {
+        CompletableFuture<T> future = new CompletableFuture<>();
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                future.complete(supplier.get());
+            } catch (Throwable throwable) {
+                future.completeExceptionally(throwable);
+            }
+        });
+        return future;
     }
 }

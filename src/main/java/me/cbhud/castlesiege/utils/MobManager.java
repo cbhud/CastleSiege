@@ -84,9 +84,8 @@ public class MobManager implements Listener {
     }
 
     /**
-     * ✅ FIX #1: Return the actual king zombie.
-     * - If stored kingZombie is valid and in this world, return it.
-     * - Otherwise scan zombies in the given world and pick the one named "King".
+     * I return the King zombie for the requested world.
+     * If my cached reference is stale, I scan named zombies in that world and rebind it.
      */
     public Zombie getKingZombie(World world) {
         if (world == null) return null;
@@ -111,7 +110,7 @@ public class MobManager implements Listener {
     @EventHandler
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
 
-        // ✅ TNT logic unchanged (as requested)
+        // I prevent TNT from damaging the King while still allowing configured player damage.
         if (event.getDamager() instanceof TNTPrimed) {
 
             if (event.getEntity() instanceof Zombie) {
@@ -134,7 +133,7 @@ public class MobManager implements Listener {
                 return;
             }
 
-            // ✅ FIX #3: null-safe arena lookup
+            // I ignore zombie damage if the attacker is no longer mapped to an arena.
             Arena arena = plugin.getArenaManager().getArenaByPlayer(damager.getUniqueId());
             if (arena == null) return;
 
@@ -150,7 +149,7 @@ public class MobManager implements Listener {
 
             if (!(projectile.getShooter() instanceof Player shooter)) return;
 
-            // ✅ FIX #3: null-safe arena lookup
+            // I ignore projectile damage if the shooter is no longer mapped to an arena.
             Arena arena = plugin.getArenaManager().getArenaByPlayer(shooter.getUniqueId());
             if (arena == null) return;
 
@@ -234,7 +233,7 @@ public class MobManager implements Listener {
             plugin.getLogger().warning("King death effect failed: " + ex.getMessage());
         }
 
-        // ✅ FIX #4: end game safely
+        // I resolve the arena from the killer first, then fall back to the King world.
         Arena arena = null;
 
         Player killer = zombie.getKiller();

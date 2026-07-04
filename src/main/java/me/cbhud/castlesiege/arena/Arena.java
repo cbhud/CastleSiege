@@ -8,6 +8,7 @@ import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Zombie;
 
 import java.util.*;
 
@@ -24,7 +25,7 @@ public class Arena {
     private final int maxPlayers;
     private final int minPlayers;
 
-    // ✅ store UUIDs, not Player objects
+    // I store UUIDs instead of Player objects so arena membership does not keep player instances alive.
     private final Set<UUID> playerIds = new HashSet<>();
 
     private ArenaState state = ArenaState.WAITING;
@@ -116,7 +117,7 @@ public class Arena {
     public Location getDefendersSpawn() { return defendersSpawn; }
     public Location getTeamSpawn(Team team) { return (team == Team.Attackers) ? attackersSpawn : defendersSpawn; }
 
-    public Location getLSpawn() { return lobbySpawn; } // kept for compatibility
+    public Location getLSpawn() { return lobbySpawn; } // I keep this alias for compatibility.
     public Location getKingSpawn() { return kingSpawn; }
 
     public Location getKSpawn() {
@@ -174,10 +175,10 @@ public class Arena {
         // In-game join = spectator
         if (state == ArenaState.IN_GAME) {
             playerIds.add(uuid);
-            plugin.getPlayerManager().setPlayerAsSpectating(player);
 
             Location ks = resolveKingSpawn();
             if (ks != null) player.teleport(ks);
+            plugin.getPlayerManager().setPlayerAsSpectating(player);
 
             sendTitleSafe(player, "spectatorTitle", 10, 70, 20);
             return false;
@@ -188,11 +189,10 @@ public class Arena {
         // Try team join; if fail -> spectator
         if (!teamManager.tryRandomTeamJoin(player)) {
             playerIds.add(uuid);
-            plugin.getPlayerManager().setPlayerAsSpectating(player);
 
             Location ks = resolveKingSpawn();
             if (ks != null) player.teleport(ks);
-
+            plugin.getPlayerManager().setPlayerAsSpectating(player);
             sendTitleSafe(player, "spectatorTitle", 10, 70, 20);
             return false;
         }
@@ -215,6 +215,7 @@ public class Arena {
     public void removePlayer(Player player) {
         if (player == null) return;
 
+        Team removedTeam = teamManager.getTeam(player);
         playerIds.remove(player.getUniqueId());
         teamManager.removePlayerFromTeam(player);
 
@@ -227,12 +228,15 @@ public class Arena {
         }
 
         plugin.getArenaManager().unmapPlayer(player.getUniqueId());
+        endGameIfNoDefendersRemain(removedTeam);
     }
 
-    /** Hardcore: remove them from team only (kept compatible with your current DeathEvent). */
+    /** I remove hardcore deaths from their team while leaving them in the arena as spectators. */
     public void removeHardcore(Player player) {
         if (player == null) return;
+        Team removedTeam = teamManager.getTeam(player);
         teamManager.removePlayerFromTeam(player);
+        endGameIfNoDefendersRemain(removedTeam);
     }
 
     /* ------------------------- Game flow ------------------------- */
@@ -275,7 +279,7 @@ public class Arena {
 
         state = ArenaState.ENDED;
 
-        // Use the new timer flag if you applied the TimerManager changes
+        // I use the timer flag so winner logic does not depend on task ids.
         boolean attackersWon = !timerManager.didCountdownExpire();
         if (teamManager.getPlayersInTeam(Team.Attackers) == 0) attackersWon = false;
 
@@ -310,7 +314,7 @@ public class Arena {
             }
 
             p.playSound(p.getLocation(), winSound, 1.0f, 1.0f);
-            plugin.getScoreboardManager().updateScoreboard(p, "end");
+            plugin.updateScoreboard(p, "end");
 
             sendLines(p, winMessageKey);
             sendTitleSafe(p, winTitleKey, 10, 70, 20);
@@ -321,7 +325,8 @@ public class Arena {
         int coinsReward = plugin.getConfigManager().getCoinsOnWin();
         for (UUID uuid : teamManager.getTeamMemberIds(winningTeam)) {
             plugin.getDataManager().addPlayerCoins(uuid, coinsReward);
-            plugin.getDataManager().incrementWins(uuid, 1);
+            plugin.getDataManager().incrementWins(uuid);
+            sendWinCoinsMessage(uuid, coinsReward);
         }
 
         // Cleanup players via ArenaManager (single source of truth)
@@ -377,13 +382,31 @@ public class Arena {
                         sendTitleSafe(p, "attackersTitle", 10, 100, 20);
                     }
                     if (plugin.getBBar().isEnabled()) {
-                        plugin.getBBar().showZombieHealthBarToPlayer(
-                                plugin.getMobManager().getKingZombie(kingSpawn.getWorld()), p);
+                        showKingBossBarToPlayer(p);
                     }
                     p.playSound(p.getLocation(), Sound.ENTITY_WITHER_SPAWN, 1.0f, 1.0f);
                 }, 20L);
             }
         }
+    }
+
+    private void endGameIfNoDefendersRemain(Team removedTeam) {
+        if (state != ArenaState.IN_GAME || removedTeam != Team.Defenders) return;
+        if (teamManager.getPlayersInTeam(Team.Defenders) > 0) return;
+        if (teamManager.getPlayersInTeam(Team.Attackers) <= 0) return;
+
+        plugin.getMobManager().removeCustomZombie(this);
+        endGame();
+    }
+
+    private void showKingBossBarToPlayer(Player player) {
+        Location kingLocation = resolveKingSpawn();
+        if (kingLocation == null || kingLocation.getWorld() == null) return;
+
+        Zombie king = plugin.getMobManager().getKingZombie(kingLocation.getWorld());
+        if (king == null || !king.isValid() || king.isDead()) return;
+
+        plugin.getBBar().showZombieHealthBarToPlayer(king, player);
     }
 
     /* ------------------------- Message helpers ------------------------- */
@@ -404,6 +427,17 @@ public class Arena {
         String line2 = title.size() >= 2 ? title.get(1) : "";
 
         player.sendTitle(line1, line2, fadeIn, stay, fadeOut);
+    }
+
+    private void sendWinCoinsMessage(UUID uuid, int coinsReward) {
+        Player player = Bukkit.getPlayer(uuid);
+        if (player == null || !player.isOnline()) return;
+
+        for (String line : plugin.getMsg().getMessage("win-coins-received", player)) {
+            if (line != null && !line.isEmpty()) {
+                player.sendMessage(line.replace("{coins}", String.valueOf(coinsReward)));
+            }
+        }
     }
 
     /* ------------------------- Setters ------------------------- */

@@ -489,7 +489,7 @@ public class CseCommand implements CommandExecutor, TabCompleter {
         if (!root.equals("cse")) tokens.add(root);
         tokens.addAll(Arrays.asList(args));
 
-        // Example: /cse <sub>
+        // I complete the first argument after /cse.
         if (tokens.size() == 1) {
             return partial(tokens.get(0), List.of("join", "randomjoin", "leave", "stats", "arena", "coins", "setlobby"));
         }

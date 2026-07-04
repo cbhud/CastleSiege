@@ -24,7 +24,7 @@ public class DamageEvent implements Listener {
     public void onDamage(EntityDamageEvent event) {
         if (!(event.getEntity() instanceof Player damagedPlayer)) return;
 
-        // No damage outside PLAYING state (your original behavior)
+        // I block damage unless the player is actively playing.
         if (plugin.getPlayerManager().getPlayerState(damagedPlayer) != PlayerState.PLAYING) {
             event.setCancelled(true);
             return;

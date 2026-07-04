@@ -63,7 +63,7 @@ public class ArenaTimerManager {
             // Update scoreboard for current arena players (copy to avoid CME)
             for (Player p : arena.getOnlinePlayersSnapshot()) {
                 if (p == null || !p.isOnline()) continue;
-                plugin.getScoreboardManager().updateScoreboard(p, "in-game");
+                plugin.updateScoreboard(p, "in-game");
             }
 
             currentCountdownTimer--;

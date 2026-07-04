@@ -19,7 +19,13 @@ import me.cbhud.castlesiege.scoreboard.ScoreboardManager;
 import me.cbhud.castlesiege.team.TeamManager;
 import me.cbhud.castlesiege.utils.*;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.io.File;
+import java.util.UUID;
 
 public final class CastleSiege extends JavaPlugin {
 
@@ -58,12 +64,22 @@ public final class CastleSiege extends JavaPlugin {
         msg = new Messages(this);
         arenaManager = new ArenaManager(this);
         arenaResetManager = new ArenaResetManager(this);
-        worldEdit = (WorldEditPlugin) Bukkit.getPluginManager().getPlugin("WorldEdit");
-        if (worldEdit == null) {
-            getLogger().severe("Regenerato or FAWE plugin not found! Disabling plugin.");
+
+        Plugin fawePlugin = Bukkit.getPluginManager().getPlugin("FastAsyncWorldEdit");
+        if (fawePlugin == null) {
+            getLogger().severe("FastAsyncWorldEdit is required for CastleSiege arena regeneration. Disabling plugin.");
             Bukkit.getPluginManager().disablePlugin(this);
             return;
         }
+
+        Plugin worldEditPlugin = Bukkit.getPluginManager().getPlugin("WorldEdit");
+        if (worldEditPlugin instanceof WorldEditPlugin) {
+            worldEdit = (WorldEditPlugin) worldEditPlugin;
+        } else {
+            worldEdit = null;
+            getLogger().info("Using FastAsyncWorldEdit and Regenerato without a standalone WorldEdit plugin.");
+        }
+
         arenaSelector = new ArenaSelector(this);
         teamSelector = new TeamSelector(this);
 
@@ -74,7 +90,12 @@ public final class CastleSiege extends JavaPlugin {
         teamManager = new TeamManager(this, this.getConfig());
         mobManager = new MobManager(this);
 
-        scoreboardManager = new ScoreboardManager(this);
+        if (areScoreboardsEnabled()) {
+            scoreboardManager = new ScoreboardManager(this);
+        } else {
+            scoreboardManager = null;
+            getLogger().info("Scoreboards are disabled in scoreboards.yml.");
+        }
         playerManager = new PlayerManager(this);
         getServer().getPluginManager().registerEvents(new MiscEvents(this), this);
 
@@ -100,8 +121,12 @@ public final class CastleSiege extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        getDataManager().disconnect();
-        bossBar.cleanup();
+        if (dataManager != null) {
+            dataManager.disconnect();
+        }
+        if (bossBar != null) {
+            bossBar.cleanup();
+        }
     }
 
     public MobManager getMobManager() {
@@ -142,6 +167,39 @@ public final class CastleSiege extends JavaPlugin {
 
     public ScoreboardManager getScoreboardManager(){
         return scoreboardManager;
+    }
+
+    public void setupScoreboard(Player player) {
+        if (scoreboardManager != null) {
+            scoreboardManager.setupScoreboard(player);
+        }
+    }
+
+    public void updateScoreboard(Player player, String state) {
+        if (scoreboardManager != null) {
+            scoreboardManager.updateScoreboard(player, state);
+        }
+    }
+
+    public void removeScoreboard(Player player) {
+        if (scoreboardManager != null) {
+            scoreboardManager.removeScoreboard(player);
+        }
+    }
+
+    public void removeScoreboard(UUID uuid) {
+        if (scoreboardManager != null) {
+            scoreboardManager.removeScoreboard(uuid);
+        }
+    }
+
+    private boolean areScoreboardsEnabled() {
+        File file = new File(getDataFolder(), "scoreboards.yml");
+        if (!file.exists()) {
+            saveResource("scoreboards.yml", false);
+        }
+
+        return YamlConfiguration.loadConfiguration(file).getBoolean("settings.enabled", true);
     }
 
     public WorldEditPlugin getWorldEdit() {

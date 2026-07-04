@@ -98,8 +98,10 @@ public class ArenaEditChatListener implements Listener {
                 return;
             }
 
-            // Reload arenas so timer/hardcore changes actually apply
-            plugin.getArenaManager().reload();
+            if (!plugin.getArenaManager().reloadArena(edit.arenaId)) {
+                player.sendMessage(ChatColor.YELLOW + "Saved arenas.yml, but the arena was not hot-reloaded because it is active or has players.");
+                return;
+            }
 
             player.sendMessage(ChatColor.GREEN + "Updated " + edit.key.pathKey + " to " + value + " for arena '" + edit.arenaId + "'.");
             new ArenaSettingsGui(plugin, this, edit.arenaId).open(player);

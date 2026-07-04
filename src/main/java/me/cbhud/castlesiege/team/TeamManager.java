@@ -151,9 +151,9 @@ public class TeamManager {
         // Messaging
         safeTeamJoinMsg(player, newTeam);
 
-        // Side effects (kept as you had)
+        // I refresh kit and scoreboard state after a team change.
         plugin.getPlayerKitManager().setDefaultKit(player);
-        plugin.getScoreboardManager().updateScoreboard(player, "pre-game");
+        plugin.updateScoreboard(player, "pre-game");
 
         return true;
     }

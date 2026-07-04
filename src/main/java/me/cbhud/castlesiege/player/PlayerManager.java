@@ -80,7 +80,7 @@ public class PlayerManager {
                 player.teleport(getLobbyLocation());
             }
 
-            plugin.getScoreboardManager().setupScoreboard(player);
+            plugin.setupScoreboard(player);
         });
     }
 
@@ -112,7 +112,7 @@ public class PlayerManager {
 
             playerStates.put(player.getUniqueId(), WAITING);
 
-            plugin.getScoreboardManager().updateScoreboard(player, "pre-game");
+            plugin.updateScoreboard(player, "pre-game");
         });
     }
 
