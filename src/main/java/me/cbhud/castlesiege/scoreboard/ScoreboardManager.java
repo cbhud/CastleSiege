@@ -179,7 +179,7 @@ public class ScoreboardManager {
         return out;
     }
 
-    // Currently unused; kept for future use safely
+    // I keep this available for future gradient support.
     @SuppressWarnings("unused")
     private String applyGradient(String text) {
         if (text == null || text.isEmpty()) return "";

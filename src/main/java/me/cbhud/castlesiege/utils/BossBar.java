@@ -129,12 +129,8 @@ public class BossBar {
         playerTasks.put(playerId, task);
     }
 
-    // Your original method - now creates individual boss bars for each player
     public void showZombieHealthBar(Zombie zombie) {
-        // This method can now be used in a foreach loop
-        // You'll need to pass the player parameter, or modify to get nearby players
-
-        // Example: Show to all online players (you can modify this logic)
+        // I show the King health bar to every online player.
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             showZombieHealthBarToPlayer(zombie, player);
         }

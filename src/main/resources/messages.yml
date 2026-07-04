@@ -64,6 +64,9 @@ starting-in:
 selectedKit:
   - "&aYou have selected the {kit} kit!"
 
+win-coins-received:
+  - "&aYou received &6{coins} &acoins for winning!"
+
 lockedKit:
   - "&cYou do not have this kit unlocked. Right-click to purchase it."
 

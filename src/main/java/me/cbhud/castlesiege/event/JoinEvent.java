@@ -35,7 +35,8 @@ public class JoinEvent implements Listener {
 
         plugin.getArenaManager().removePlayerFromArena(p);
 
-        plugin.getScoreboardManager().removeScoreboard(p);
+        plugin.removeScoreboard(p);
+        plugin.getPlayerKitManager().clearSelectedKit(p);
         plugin.getPlayerManager().clearPlayerState(p);
         plugin.getNameTagManager().removeNametag(p);
     }

@@ -1,12 +1,11 @@
 name: CastleSiege
-version: '2.1.0'
+version: '2.1.1'
 main: me.cbhud.castlesiege.CastleSiege
 author: cbhud
 api-version: '1.20'
-depend: [Regenerato]
+depend: [Regenerato, FastAsyncWorldEdit]
 softdepend:
   - PlaceholderAPI
-  - FastAsyncWorldEdit
   - Multiverse-Core
 commands:
   cse:

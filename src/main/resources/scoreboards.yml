@@ -1,4 +1,5 @@
 settings:
+  enabled: true
   auto-refresh:
     enabled: true
 ## 20 ticks = 1 second

@@ -39,11 +39,11 @@ public class ArenaSettingsGui {
                 .rows(3)
                 .create();
 
-        boolean locked = arena.getState() == ArenaState.IN_GAME;
+        boolean locked = arena.getState() == ArenaState.IN_GAME || arena.getNoPlayers() > 0;
         if (locked) {
             gui.setItem(13, ItemBuilder.from(Material.BARRIER)
                     .name(Component.text(ChatColor.RED + "Editing disabled"))
-                    .lore(List.of(Component.text(ChatColor.GRAY + "Arena is IN_GAME. Stop it first.")))
+                    .lore(List.of(Component.text(ChatColor.GRAY + "Arena must be empty before editing.")))
                     .asGuiItem(e -> { e.setCancelled(true); })
             );
         }
@@ -91,7 +91,7 @@ public class ArenaSettingsGui {
         Material mat = hardcore ? Material.LIME_DYE : Material.GRAY_DYE;
         List<Component> lore = new ArrayList<>();
         lore.add(Component.text(ChatColor.GRAY + "Current: " + (hardcore ? "true" : "false")));
-        lore.add(Component.text(ChatColor.DARK_GRAY + (locked ? "Locked while IN_GAME" : "Click to toggle")));
+        lore.add(Component.text(ChatColor.DARK_GRAY + (locked ? "Locked while arena has players" : "Click to toggle")));
 
         return ItemBuilder.from(mat)
                 .name(Component.text(ChatColor.GOLD + "Hardcore"))
@@ -103,9 +103,11 @@ public class ArenaSettingsGui {
                     boolean newValue = !hardcore;
                     boolean ok = ArenaYmlEditor.setBoolean(plugin, arenaId, "hardcore", newValue);
                     if (ok) {
-                        plugin.getArenaManager().reload();
-                        ((Player) e.getWhoClicked()).sendMessage(ChatColor.GREEN + "Hardcore set to " + newValue);
-                        open((Player) e.getWhoClicked());
+                        Player player = (Player) e.getWhoClicked();
+                        if (reloadEditedArena(player)) {
+                            player.sendMessage(ChatColor.GREEN + "Hardcore set to " + newValue);
+                            open(player);
+                        }
                     } else {
                         ((Player) e.getWhoClicked()).sendMessage(ChatColor.RED + "Failed to save arenas.yml");
                     }
@@ -117,7 +119,7 @@ public class ArenaSettingsGui {
 
         List<Component> lore = new ArrayList<>();
         lore.add(Component.text(ChatColor.GRAY + "Current: " + value));
-        lore.add(Component.text(ChatColor.DARK_GRAY + (locked ? "Locked while IN_GAME" : "Click to edit (chat input)")));
+        lore.add(Component.text(ChatColor.DARK_GRAY + (locked ? "Locked while arena has players" : "Click to edit (chat input)")));
 
         return ItemBuilder.from(mat)
                 .name(Component.text(ChatColor.GOLD + title))
@@ -132,7 +134,8 @@ public class ArenaSettingsGui {
     private void startChatEdit(InventoryClickEvent e, ArenaEditChatListener.PendingKey key) {
         if (!(e.getWhoClicked() instanceof Player player)) return;
         player.closeInventory();
-        chat.begin(player, arenaId, key);    }
+        chat.begin(player, arenaId, key);
+    }
 
     private GuiItem spawnSetterItem(String key, String title, Material mat, boolean locked) {
         String raw = ArenaYmlEditor.getSpawnRaw(plugin, arenaId, key);
@@ -140,7 +143,7 @@ public class ArenaSettingsGui {
         List<Component> lore = new ArrayList<>();
         lore.add(Component.text(ChatColor.GRAY + "Current:"));
         lore.add(Component.text(ChatColor.DARK_GRAY + raw));
-        lore.add(Component.text(ChatColor.DARK_GRAY + (locked ? "Locked while IN_GAME" : "Click to set to your position")));
+        lore.add(Component.text(ChatColor.DARK_GRAY + (locked ? "Locked while arena has players" : "Click to set to your position")));
 
         return ItemBuilder.from(mat)
                 .name(Component.text(ChatColor.GOLD + title))
@@ -152,12 +155,22 @@ public class ArenaSettingsGui {
 
                     boolean ok = ArenaYmlEditor.setSpawn(plugin, arenaId, key, p.getLocation());
                     if (ok) {
-                        plugin.getArenaManager().reload();
-                        p.sendMessage(ChatColor.GREEN + "Updated " + key + " for arena '" + arenaId + "'.");
-                        open(p);
+                        if (reloadEditedArena(p)) {
+                            p.sendMessage(ChatColor.GREEN + "Updated " + key + " for arena '" + arenaId + "'.");
+                            open(p);
+                        }
                     } else {
                         p.sendMessage(ChatColor.RED + "Failed to save arenas.yml");
                     }
                 });
+    }
+
+    private boolean reloadEditedArena(Player player) {
+        if (plugin.getArenaManager().reloadArena(arenaId)) {
+            return true;
+        }
+
+        player.sendMessage(ChatColor.YELLOW + "Saved arenas.yml, but the arena was not hot-reloaded because it is active or has players.");
+        return false;
     }
 }

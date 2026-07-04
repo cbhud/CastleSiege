@@ -8,9 +8,10 @@ import org.bukkit.inventory.ItemStack;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class PlayerKitManager {
-    private final Map<Player, KitManager.KitData> selectedKits;
+    private final Map<UUID, KitManager.KitData> selectedKits;
     private final CastleSiege plugin;
 
     public PlayerKitManager(CastleSiege plugin) {
@@ -19,10 +20,7 @@ public class PlayerKitManager {
     }
 
     public boolean hasSelectedKit(Player player){
-        if (selectedKits.containsKey(player)){
-            return true;
-        }
-        return false;
+        return player != null && selectedKits.containsKey(player.getUniqueId());
     }
 
     public void giveKit(Player player, KitManager.KitData kit) {
@@ -32,7 +30,7 @@ public class PlayerKitManager {
         }
 
         equipArmor(player, kit.getItems());
-        selectedKits.put(player, kit);
+        selectedKits.put(player.getUniqueId(), kit);
     }
 
     public void selectKit(Player player, KitManager.KitData kit) {
@@ -41,14 +39,15 @@ public class PlayerKitManager {
             return;
         }
 
-        if (kit.getTeam() != plugin.getArenaManager().getArenaByPlayer(player.getUniqueId()).getTeam(player)) {
+        if (plugin.getArenaManager().getArenaByPlayer(player.getUniqueId()) == null
+                || kit.getTeam() != plugin.getArenaManager().getArenaByPlayer(player.getUniqueId()).getTeam(player)) {
             player.sendMessage(plugin.getMsg().getMessage("opposingTeamKit", player).get(0));
             return;
         }
 
         if (kit.getPrice() == 0) {
-            selectedKits.put(player, kit);
-            plugin.getScoreboardManager().updateScoreboard(player, "pre-game");
+            selectedKits.put(player.getUniqueId(), kit);
+            plugin.updateScoreboard(player, "pre-game");
             String msg = plugin.getMsg().getMessage("selectedKit", player).get(0);
             msg = msg.replace("{kit}", kit.getName());
             player.sendMessage(msg);
@@ -58,8 +57,8 @@ public class PlayerKitManager {
         plugin.getDataManager().hasPlayerKit(player.getUniqueId(), kit.getName()).thenAccept(hasKit -> {
             org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
                 if (hasKit) {
-                    selectedKits.put(player, kit);
-                    plugin.getScoreboardManager().updateScoreboard(player, "pre-game");
+                    selectedKits.put(player.getUniqueId(), kit);
+                    plugin.updateScoreboard(player, "pre-game");
                     String msg = plugin.getMsg().getMessage("selectedKit", player).get(0);
                     msg = msg.replace("{kit}", kit.getName());
                     player.sendMessage(msg);
@@ -72,7 +71,7 @@ public class PlayerKitManager {
 
 
     public KitManager.KitData getSelectedKit(Player player) {
-        return selectedKits.get(player);
+        return player == null ? null : selectedKits.get(player.getUniqueId());
     }
 
     public int getKitPrice(KitManager.KitData kit) {
@@ -123,7 +122,13 @@ public class PlayerKitManager {
             return;
         }
 
-        selectedKits.put(player, defaultKit);
+        selectedKits.put(player.getUniqueId(), defaultKit);
+    }
+
+    public void clearSelectedKit(Player player) {
+        if (player != null) {
+            selectedKits.remove(player.getUniqueId());
+        }
     }
 
 

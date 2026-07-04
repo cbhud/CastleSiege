@@ -92,7 +92,7 @@ public class CustomPlaceholder extends PlaceholderExpansion {
             case "arena":
                 return getArenaId(arena);
             case "arenasize":
-                return String.valueOf(getArenaSize(arena)); // ✅ fixed
+                return String.valueOf(getArenaSize(arena));
             case "arena_type":
                 return getArenaType(arena);
             case "team":
@@ -190,7 +190,7 @@ public class CustomPlaceholder extends PlaceholderExpansion {
     }
 
     private int getArenaSize(Arena arena) {
-        // ✅ FIX: Arena no longer has getPlayers()
+        // I read the arena membership count from its UUID set.
         return arena != null ? arena.getNoPlayers() : 0;
     }
 

@@ -27,7 +27,7 @@ public class KitManager {
         createKitsFileIfNotExists();
         kits = new ArrayList<>();
         kits = loadKits();
-        syncKitsToDatabase();
+        syncKitsToDatabaseAsync();
     }
 
     // Load kits from kits.yml
@@ -196,10 +196,12 @@ public class KitManager {
         }
     }
 
-    public void syncKitsToDatabase() {
-        for (KitData kit : kits) {
-            saveOrUpdateKitInDatabase(kit);
-        }
+    public void syncKitsToDatabaseAsync() {
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            for (KitData kit : kits) {
+                saveOrUpdateKitInDatabase(kit);
+            }
+        });
     }
 }
 
