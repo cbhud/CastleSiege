@@ -22,6 +22,7 @@ public class PlayerManager {
 
     // UUID -> state (no Player refs = no leaks)
     private final Map<UUID, PlayerState> playerStates = new ConcurrentHashMap<>();
+    private final Map<UUID, Integer> gameKills = new ConcurrentHashMap<>();
 
     public PlayerManager(CastleSiege plugin) {
         this.plugin = plugin;
@@ -41,6 +42,18 @@ public class PlayerManager {
     public void clearPlayerState(Player player) {
         if (player == null) return;
         playerStates.remove(player.getUniqueId());
+        gameKills.remove(player.getUniqueId());
+    }
+
+    public void addGameKill(UUID uuid) {
+        if (uuid != null) {
+            gameKills.put(uuid, gameKills.getOrDefault(uuid, 0) + 1);
+        }
+    }
+
+    public int getGameKills(UUID uuid) {
+        if (uuid == null) return 0;
+        return gameKills.getOrDefault(uuid, 0);
     }
 
     public void setPlayerAsPlaying(Player player) {
@@ -89,6 +102,7 @@ public class PlayerManager {
         runSync(() -> {
             if (!player.isOnline()) return;
 
+            gameKills.remove(player.getUniqueId());
             player.setGameMode(GameMode.SURVIVAL);
             player.getInventory().clear();
             player.setHealth(20);

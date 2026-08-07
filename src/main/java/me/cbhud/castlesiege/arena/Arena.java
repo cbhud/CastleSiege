@@ -324,8 +324,7 @@ public class Arena {
         // Rewards using UUIDs (works even if winners disconnected)
         int coinsReward = plugin.getConfigManager().getCoinsOnWin();
         for (UUID uuid : teamManager.getTeamMemberIds(winningTeam)) {
-            plugin.getDataManager().addPlayerCoins(uuid, coinsReward);
-            plugin.getDataManager().incrementWins(uuid);
+            plugin.getDataManager().incrementWins(uuid, coinsReward);
             sendWinCoinsMessage(uuid, coinsReward);
         }
 

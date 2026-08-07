@@ -17,9 +17,14 @@ class CustomItemInteractionHandler {
 
     private final CastleSiege plugin;
     private final Map<UUID, Map<String, Long>> cooldowns = new HashMap<>();
+    private AbilityHandler abilityHandler;
 
     CustomItemInteractionHandler(CastleSiege plugin) {
         this.plugin = plugin;
+    }
+
+    void setAbilityHandler(AbilityHandler abilityHandler) {
+        this.abilityHandler = abilityHandler;
     }
 
     boolean handle(PlayerInteractEvent event) {
@@ -29,6 +34,10 @@ class CustomItemInteractionHandler {
         if (match.isEmpty()) return false;
 
         CustomItem customItem = match.get();
+
+        if (customItem.getAbility() != null && abilityHandler != null) {
+            return abilityHandler.handleInteract(event, customItem);
+        }
 
         if (item.getType() == Material.MUSHROOM_STEW) {
             removeOneItem(player, item);
@@ -48,7 +57,7 @@ class CustomItemInteractionHandler {
         cooldowns.remove(uuid);
     }
 
-    private boolean canUse(Player player, CustomItem customItem) {
+    boolean canUse(Player player, CustomItem customItem) {
         long cooldown = customItem.getCooldown();
         if (cooldown <= 0) {
             return true;
@@ -72,13 +81,13 @@ class CustomItemInteractionHandler {
         return true;
     }
 
-    private void applyEffects(Player player, CustomItem customItem) {
+    void applyEffects(Player player, CustomItem customItem) {
         for (PotionEffect effect : customItem.getEffects()) {
             player.addPotionEffect(effect);
         }
     }
 
-    private void removeOneItem(Player player, ItemStack item) {
+    void removeOneItem(Player player, ItemStack item) {
         ItemStack clone = item.clone();
         clone.setAmount(1);
         player.getInventory().removeItem(clone);

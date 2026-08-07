@@ -8,7 +8,7 @@ kits:
       - STONE_SWORD
       - CROSSBOW
       - ARROW:32
-      - SNOWBALL:1
+      - CUSTOM_ITEM:switcher_snowball
       - CUSTOM_ITEM:stew
       - CHAINMAIL_HELMET
       - CHAINMAIL_CHESTPLATE
@@ -23,7 +23,7 @@ kits:
     kitItems:
       - IRON_SWORD
       - CUSTOM_ITEM:spear
-      - SNOWBALL:1
+      - CUSTOM_ITEM:grappling_hook
       - CUSTOM_ITEM:stew
       - CHAINMAIL_HELMET
       - IRON_CHESTPLATE
@@ -38,7 +38,7 @@ kits:
       - STONE_SWORD
       - CUSTOM_ITEM:support
       - CUSTOM_ITEM:attack
-      - SNOWBALL:1
+      - CUSTOM_ITEM:time_warp_pearl
       - CUSTOM_ITEM:stew
       - CHAINMAIL_HELMET
       - CHAINMAIL_CHESTPLATE
@@ -53,7 +53,7 @@ kits:
     kitItems:
       - IRON_SWORD
       - CUSTOM_ITEM:oathstone
-      - SNOWBALL:1
+      - CUSTOM_ITEM:stunner
       - CUSTOM_ITEM:stew
       - CHAINMAIL_HELMET
       - IRON_CHESTPLATE
@@ -68,7 +68,7 @@ kits:
       - STONE_SWORD
       - BOW
       - ARROW:32
-      - CUSTOM_ITEM:sight
+      - CUSTOM_ITEM:rotten_egg
       - CUSTOM_ITEM:stew
       - LEATHER_HELMET
       - LEATHER_CHESTPLATE
@@ -83,7 +83,7 @@ kits:
     kitItems:
       - STONE_SWORD
       - TNT
-      - CUSTOM_ITEM:stew
+      - CUSTOM_ITEM:anti_block_bone
       - CUSTOM_ITEM:stew
       - CHAINMAIL_HELMET
       - CHAINMAIL_CHESTPLATE
@@ -97,7 +97,7 @@ kits:
     kitItems:
       - IRON_AXE
       - CUSTOM_ITEM:axe
-      - CUSTOM_ITEM:rage
+      - CUSTOM_ITEM:bamboozle
       - CHAINMAIL_HELMET
       - CHAINMAIL_CHESTPLATE
       - CHAINMAIL_LEGGINGS

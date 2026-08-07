@@ -40,6 +40,7 @@ in-game:
     - ""
     - "&eTime Remaining: %cs_timer%"
     - "&cKing's Health: %cs_king%"
+    - "&6Game Kills: %cs_game_kills%"
     - "&a%cs_defenders%: %cs_defenders_size%"
     - "&b%cs_attackers%: %cs_attackers_size%"
     - ""

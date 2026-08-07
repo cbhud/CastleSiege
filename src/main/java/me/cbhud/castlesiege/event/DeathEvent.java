@@ -42,8 +42,8 @@ public class DeathEvent implements Listener {
         Player killer = player.getKiller();
         if (killer != null) {
             UUID killerId = killer.getUniqueId();
-            plugin.getDataManager().addPlayerCoins(killerId, plugin.getConfigManager().getCoinsOnKill());
-            plugin.getDataManager().incrementKills(killerId, 1);
+            plugin.getDataManager().incrementKills(killerId, plugin.getConfigManager().getCoinsOnKill());
+            plugin.getPlayerManager().addGameKill(killerId);
 
             applyKillEffects(killer, plugin.getPlayerKitManager().getSelectedKit(killer));
         }

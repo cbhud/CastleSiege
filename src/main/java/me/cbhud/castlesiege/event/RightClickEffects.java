@@ -24,6 +24,9 @@ public class RightClickEffects implements Listener {
         this.axeHandler = new ThrowableAxeHandler(plugin);
         this.wizardSpellHandler = new WizardSpellHandler(plugin);
         this.customItemHandler = new CustomItemInteractionHandler(plugin);
+        AbilityHandler abilityHandler = new AbilityHandler(plugin, customItemHandler);
+        customItemHandler.setAbilityHandler(abilityHandler);
+        plugin.getServer().getPluginManager().registerEvents(abilityHandler, plugin);
     }
 
     @EventHandler
@@ -38,6 +41,7 @@ public class RightClickEffects implements Listener {
         }
 
         if (menuHandler.handleLobbyItem(event)) {
+            event.setCancelled(true);
             return;
         }
 
@@ -46,23 +50,26 @@ public class RightClickEffects implements Listener {
             return;
         }
 
+        if (menuHandler.handleWaitingArenaItem(event, arena)) {
+            event.setCancelled(true);
+            return;
+        }
+
+        if (menuHandler.handleLeaveItem(event, arena)) {
+            event.setCancelled(true);
+            return;
+        }
+
+        if (arena.getState() != ArenaState.IN_GAME || plugin.getPlayerManager().getPlayerState(event.getPlayer().getUniqueId()) != me.cbhud.castlesiege.player.PlayerState.PLAYING) {
+            event.setCancelled(true);
+            return;
+        }
+
         if (axeHandler.handle(event, arena)) {
             return;
         }
 
         if (wizardSpellHandler.handle(event, arena)) {
-            return;
-        }
-
-        if (menuHandler.handleWaitingArenaItem(event, arena)) {
-            return;
-        }
-
-        if (arena.getState() == ArenaState.ENDED) {
-            return;
-        }
-
-        if (menuHandler.handleLeaveItem(event, arena)) {
             return;
         }
 

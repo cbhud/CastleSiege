@@ -96,7 +96,9 @@ public class ItemManager {
                 }
             }
 
-            CustomItem customItem = new CustomItem(key, builder.build(), effects, cooldown * 1000, enchantmentsMap);
+            String ability = section.getString("ability", null);
+
+            CustomItem customItem = new CustomItem(key, builder.build(), effects, cooldown * 1000, enchantmentsMap, ability, section);
             customItems.put(key, customItem);
         }
     }

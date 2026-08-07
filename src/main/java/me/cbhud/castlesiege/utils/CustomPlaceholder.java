@@ -18,10 +18,10 @@ public class CustomPlaceholder extends PlaceholderExpansion {
 
     private final CastleSiege plugin;
 
-    // --- Leaderboard caches (strings are read/written across threads) ---
-    private volatile String cachedTopWins = "Loading...";
-    private volatile String cachedTopKills = "Loading...";
-    private volatile String cachedTopDeaths = "Loading...";
+    // --- Leaderboard caches (read/written across threads) ---
+    private volatile List<String> cachedTopWins = Collections.emptyList();
+    private volatile List<String> cachedTopKills = Collections.emptyList();
+    private volatile List<String> cachedTopDeaths = Collections.emptyList();
 
     // --- Player stat caches ---
     private final Map<UUID, Integer> cachedKills = new ConcurrentHashMap<>();
@@ -69,16 +69,31 @@ public class CustomPlaceholder extends PlaceholderExpansion {
         UUID uuid = player.getUniqueId();
         Arena arena = plugin.getArenaManager().getArenaByPlayer(uuid);
 
-        switch (identifier.toLowerCase(Locale.ROOT)) {
+        String lower = identifier.toLowerCase(Locale.ROOT);
+
+        // --- Indexed Leaderboard Placeholders (for Holograms) ---
+        if (lower.startsWith("top_wins_")) {
+            return getIndexedLeaderboard(cachedTopWins, lower.replace("top_wins_", ""));
+        }
+        if (lower.startsWith("top_kills_")) {
+            return getIndexedLeaderboard(cachedTopKills, lower.replace("top_kills_", ""));
+        }
+        if (lower.startsWith("top_deaths_")) {
+            return getIndexedLeaderboard(cachedTopDeaths, lower.replace("top_deaths_", ""));
+        }
+
+        switch (lower) {
             case "top_10_wins":
-                return cachedTopWins;
+                return String.join("\n", cachedTopWins);
             case "top_10_kills":
-                return cachedTopKills;
+                return String.join("\n", cachedTopKills);
             case "top_10_deaths":
-                return cachedTopDeaths;
+                return String.join("\n", cachedTopDeaths);
 
             case "kills":
                 return String.valueOf(getCached(cachedKills, uuid));
+            case "game_kills":
+                return String.valueOf(plugin.getPlayerManager().getGameKills(uuid));
             case "deaths":
                 return String.valueOf(getCached(cachedDeaths, uuid));
             case "wins":
@@ -92,7 +107,7 @@ public class CustomPlaceholder extends PlaceholderExpansion {
             case "arena":
                 return getArenaId(arena);
             case "arenasize":
-                return String.valueOf(getArenaSize(arena));
+                return String.valueOf(getArenaSize(arena)); // ✅ fixed
             case "arena_type":
                 return getArenaType(arena);
             case "team":
@@ -110,7 +125,7 @@ public class CustomPlaceholder extends PlaceholderExpansion {
             case "defenders":
                 return plugin.getConfigManager().getDefender();
             case "timer":
-                return String.valueOf(getTimer(arena));
+                return formatTime(getTimer(arena));
             case "starting-in":
                 return String.valueOf(getStartingIn(arena));
             case "kit":
@@ -137,9 +152,9 @@ public class CustomPlaceholder extends PlaceholderExpansion {
 
     private void updateLeaderboardCache() {
         try {
-            cachedTopWins = String.join("\n", plugin.getDataManager().getTopWins().join());
-            cachedTopKills = String.join("\n", plugin.getDataManager().getTopKills().join());
-            cachedTopDeaths = String.join("\n", plugin.getDataManager().getTopDeaths().join());
+            cachedTopWins = plugin.getDataManager().getTopWins();
+            cachedTopKills = plugin.getDataManager().getTopKills();
+            cachedTopDeaths = plugin.getDataManager().getTopDeaths();
         } catch (Exception e) {
             plugin.getLogger().warning("Failed to update leaderboard cache: " + e.getMessage());
         }
@@ -165,10 +180,10 @@ public class CustomPlaceholder extends PlaceholderExpansion {
             purgeNotOnline(cachedCoins, onlineUuids);
 
             for (UUID uuid : onlineUuids) {
-                cachedKills.put(uuid, plugin.getDataManager().getPlayerKills(uuid).join());
-                cachedDeaths.put(uuid, plugin.getDataManager().getPlayerDeaths(uuid).join());
-                cachedWins.put(uuid, plugin.getDataManager().getPlayerWins(uuid).join());
-                cachedCoins.put(uuid, plugin.getDataManager().getPlayerCoins(uuid).join());
+                cachedKills.put(uuid, plugin.getDataManager().getPlayerKills(uuid));
+                cachedDeaths.put(uuid, plugin.getDataManager().getPlayerDeaths(uuid));
+                cachedWins.put(uuid, plugin.getDataManager().getPlayerWins(uuid));
+                cachedCoins.put(uuid, plugin.getDataManager().getPlayerCoins(uuid));
             }
         } catch (Exception e) {
             plugin.getLogger().warning("Failed to update stats cache: " + e.getMessage());
@@ -190,7 +205,7 @@ public class CustomPlaceholder extends PlaceholderExpansion {
     }
 
     private int getArenaSize(Arena arena) {
-        // I read the arena membership count from its UUID set.
+        // ✅ FIX: Arena no longer has getPlayers()
         return arena != null ? arena.getNoPlayers() : 0;
     }
 
@@ -242,6 +257,16 @@ public class CustomPlaceholder extends PlaceholderExpansion {
 
     // ------------------ STAT HELPERS ------------------
 
+    private String getIndexedLeaderboard(List<String> cache, String indexStr) {
+        try {
+            int index = Integer.parseInt(indexStr) - 1;
+            if (index >= 0 && index < cache.size()) {
+                return cache.get(index);
+            }
+        } catch (NumberFormatException ignored) {}
+        return "&7N/A"; // fallback if not enough players or invalid number
+    }
+
     private int getCached(Map<UUID, Integer> map, UUID uuid) {
         return map.getOrDefault(uuid, 0);
     }
@@ -251,5 +276,18 @@ public class CustomPlaceholder extends PlaceholderExpansion {
         double deaths = getCached(cachedDeaths, uuid);
         double kd = (deaths == 0) ? kills : (kills / deaths);
         return Math.round(kd * 10.0) / 10.0;
+    }
+
+    private String formatTime(int totalSeconds) {
+        if (totalSeconds < 0) totalSeconds = 0;
+        int hours = totalSeconds / 3600;
+        int minutes = (totalSeconds % 3600) / 60;
+        int seconds = totalSeconds % 60;
+
+        if (hours > 0) {
+            return String.format("%02d:%02d:%02d", hours, minutes, seconds);
+        } else {
+            return String.format("%02d:%02d", minutes, seconds);
+        }
     }
 }

@@ -246,6 +246,183 @@ items:
     lore:
       - "§70.06% chance to poison on damage"
 
+
+customitem-cooldown:
+  - "&cYou can use this item again in {seconds} seconds."
+
+selectTeamGui:
+  - "&eSelect Team"
+
+leaveArena:
+  - "&cYou have left the arena!"
+
+wizardAttackSpell:
+  - "&6Your spell has struck your opponents with powerful magic!"
+
+wizardSupportSpell:
+  - "&aYou have cast a supportive spell, empowering your nearby allies!"
+
+alredayOwnKit:
+  - "&aYou alreday own this kit!"
+
+purchaseKitSuccess:
+  - "&aYou have successfully purchased the {kitname} kit!"
+
+purchaseKitUnsuccess:
+  - "&cYou do not have enough coins."
+
+
+##TITLES ARE 2 LINE MESSAGES FIRST ONE IS TOP TITLE AND SECOND ONE IS BOTTOM
+spectatorTitle:
+  - "&8You are now spectating!"
+  - "&7Please wait until game finishes or /leave"
+
+hardcoreDeathTitle:
+  - "&cYou died"
+  - "&eBetter luck next time! You can /leave"
+
+attackersTitle:
+  - "&4&lAttack Begins!"
+  - "&cHunt down and defeat the King!"
+
+defendersTitle:
+  - "&2&lDefend the Fortress!"
+  - "&aKeep the King safe at all costs!"
+
+defendersWinTitle:
+  - "&2&lVictory for the Defenders!"
+  - "&aThe King has been protected!"
+
+attackersWinTitle:
+  - "&4&lThe Throne Has Fallen!"
+  - "&cThe King has been slain!"
+
+respawnTitle:
+  - "&cYou died!"
+  - "&7Respawning in... 5 seconds"
+
+##GUI TRANSLATIONS
+select-arena-in-gui:
+  - "&eSelect Arena"
+
+##ARENA GUI STATUS MESSAGES
+in-game-status:
+  - "&aIn Game"
+
+waiting-status:
+  - "&e&lWaiting for players..."
+
+restarting-status:
+  - "&4&lRestarting..."
+
+unknown-status:
+  - "&c&lUnknown State"
+
+##THIS MESSAGE IS FREE FORMAT SINCE THE 2.0 INITIAL RELEASE
+arena-hover-gui:
+  - ""
+  - "&bPlayers: {players}"
+  - "&bStatus: {status}"
+  - "&eMap: {map}"
+  - "&cType: {type}"
+  - ""
+  - "&7Click to join!"
+
+##KIT GUI
+kitgui:
+  - "&eSelect Kit"
+
+kit-name-display:
+  - "§r§c{kit}"
+
+kit-team-display:
+  - "§r§eTeam: {team}"
+
+kit-price-free:
+  - "§aFree"
+
+kit-price-coins:
+  - "§6{price} §ecoins"
+
+kit-lore-space-1:
+  - "§r"
+
+kit-lore-space-2:
+  - "§r"
+
+kit-left-click:
+  - "§r§7Left-click to select"
+
+kit-right-click:
+  - "§r§7Right-click to purchase"
+
+
+##TEAM SELECTOR
+teamgui:
+  - "&eSelect Team"
+
+team-selector-attackers:
+  - "§eAssassinate the King and conquer the castle!"
+
+team-selector-defenders:
+  - "§eProtect the King and hold the castle walls!"
+
+team-join:
+    - "&aYou have joined the {team}!"
+
+team-already-joined:
+    - "&cYou are already in this team!"
+
+team-full:
+    - "&cThis team is full!"
+
+team-balance:
+    - "&cYou cannot join this team because it would unbalance the teams!"
+
+
+##FOR ITEMS
+
+items:
+  axe:
+    name: "§cThrowable Axe"
+    lore:
+      - "§7Right-click to throw"
+
+  spear:
+    name: "§cThrowable Spear"
+    lore:
+      - "§7Right-click to throw"
+
+  stew:
+    name: "§dMagic Stew"
+    lore:
+      - "§7Regenerates for 5 seconds"
+
+  rage:
+    name: "§cBerserker's Rage"
+    lore:
+      - "§7Gives special berserker effects"
+
+  ragnarok:
+    name: "§4Ragnarok"
+    lore:
+      - "§7Strength and resistance but slowness"
+
+  sight:
+    name: "§eSkald's Sight"
+    lore:
+      - "§7Gives special Skald effects"
+
+  harm:
+    name: "§eDamage Arrow"
+    lore:
+      - "§7Special effects when used"
+
+  sword:
+    name: "§dMystic Sword"
+    lore:
+      - "§70.06% chance to poison on damage"
+
   attack:
     name: "§cAttack Wand"
     lore:
@@ -255,3 +432,30 @@ items:
     name: "§aSupport Wand"
     lore:
       - "§7Cast mysterious spells to help teammates!"
+
+ability-switcher-used:
+  - "&aYou swapped positions with {target}!"
+ability-switcher-hit:
+  - "&cYou were swapped by {player}!"
+ability-stunner-used:
+  - "&aYou stunned {target} for {seconds}s!"
+ability-stunner-hit:
+  - "&cYou were stunned by {player} for {seconds}s!"
+ability-stunner-already:
+  - "&cThat player is already stunned!"
+ability-antiblock-used:
+  - "&aYou blocked {target} from building for {seconds}s!"
+ability-antiblock-hit:
+  - "&cYou were blocked from building by {player} for {seconds}s!"
+ability-bamboozle-used:
+  - "&aYou shuffled {target}'s hotbar!"
+ability-bamboozle-hit:
+  - "&cYour hotbar was shuffled by {player}!"
+ability-timewarp-used:
+  - "&dTime-warp activated! You'll snap back in {seconds}s..."
+ability-rottenegg-used:
+  - "&aYour rotten egg hit {target}!"
+ability-rottenegg-hit:
+  - "&cYou were hit by {player}'s rotten egg!"
+ability-no-target:
+  - "&cNo enemy found in range!"

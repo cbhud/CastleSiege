@@ -115,3 +115,76 @@ items:
     name: "&eThrowable Axe"
     lore:
       - "&7Right-click to throw!"
+
+  switcher_snowball:
+    material: SNOWBALL
+    name: "&eSwitcher Snowball"
+    lore:
+      - "&7Throw to swap positions with hit player"
+    cooldown: 30
+    amount: 1
+    ability: switcher-snowball
+
+  grappling_hook:
+    material: FISHING_ROD
+    name: "&6Grappling Hook"
+    lore:
+      - "&7Cast to pull yourself forward"
+    cooldown: 20
+    amount: 1
+    ability: grappling-hook
+
+  time_warp_pearl:
+    material: ENDER_PEARL
+    name: "&dTime-Warp Pearl"
+    lore:
+      - "&7Teleport forward, snap back after 5s"
+    cooldown: 45
+    amount: 1
+    ability: time-warp-pearl
+    seconds: 5
+
+  stunner:
+    material: PRISMARINE_CRYSTALS
+    name: "&bStunner"
+    lore:
+      - "&7Stun the nearest enemy for 3 seconds"
+    cooldown: 30
+    amount: 1
+    ability: stunner
+    seconds: 3
+
+  rotten_egg:
+    material: EGG
+    name: "&2Rotten Egg"
+    lore:
+      - "&7Throw to poison and slow hit player"
+    cooldown: 25
+    amount: 1
+    ability: rotten-egg
+    effects:
+      - type: POISON
+        duration: 100
+        amplifier: 0
+      - type: SLOW
+        duration: 60
+        amplifier: 1
+
+  anti_block_bone:
+    material: BONE
+    name: "&cAnti-Block Bone"
+    lore:
+      - "&7Prevent nearest enemy from building for 5s"
+    cooldown: 30
+    amount: 1
+    ability: anti-blockup
+    seconds: 5
+
+  bamboozle:
+    material: NAUTILUS_SHELL
+    name: "&5Bamboozle"
+    lore:
+      - "&7Shuffle nearest enemy's hotbar"
+    cooldown: 35
+    amount: 1
+    ability: bamboozle
